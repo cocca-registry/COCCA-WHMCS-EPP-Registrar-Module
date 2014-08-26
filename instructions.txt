@@ -1,0 +1,28 @@
+1. Copy the folder 'whoisquery' into the WHMCS installation directory
+2. Copy the folder 'COCCAepp' to 'YOUR_PATH_TO_WHMCS/modules/registrars/'
+3. In WHMCS's control panel top lime, click on "Setup".
+4. Click then on "Products / Services" => "Domain Registrars"
+5. Enable COCCA module and then configure it.
+6. It's suggested, although not required, to keep the module log enabled in Utilities -> Log -> Log Module, even for production use, to facilitate the diagnosis of problems reported by customers. By doing so, it won't be necessary to ask the customer to redo a transaction for an issue to be diagnosed.
+7. Enable domain Sync and add this to cron.... php -q /path/to/home/public_html/whmcspath/crons/domainsync.php
+
+################ Configuring the EPP Whois - Checking Domain availability #################
+
+1. Go to the file 'YOUR_PATH_TO_WHMCS/includes/whoisservers.php'
+2. Apend the following at the last line
+
+.gtld|http://example.com/whoisquery/query.php?domain=|HTTPREQUEST-Available
+
+Replace .gtld with the extensions that you will be using the script for and example.com with your domain.
+
+
+
+#######Operations Supported##############
+1. Register Domains
+2. Renew Domains
+3. Manage domain transfers - Request, Approve , Cancel , Reject
+4. Modify contact details
+5. Manage Domain Nameservers
+6. Create child Nameservers
+7. Request for a domain deletion
+8. Domain Synchronization

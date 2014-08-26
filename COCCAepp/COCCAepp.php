@@ -655,6 +655,7 @@ function COCCAepp_TransferDomain($params) {
 		<transfer op="request">
 			<domain:transfer xmlns:domain="urn:ietf:params:xml:ns:domain-1.0">
 				<domain:name>'.$sld.'.'.$tld.'</domain:name>
+				<domain:authInfo><domain:pw>'.$transfersecret.'</domain:pw></domain:authInfo>
 			</domain:transfer>
 		</transfer>
 		<clTRID>'.mt_rand().mt_rand().'</clTRID>

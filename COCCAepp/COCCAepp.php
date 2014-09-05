@@ -1818,10 +1818,10 @@ function COCCAepp_ApproveTransfer($params) {
 <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
 	<command>
 		<transfer op="approve">
-			<domain:transferi xmlns:domain="urn:ietf:params:xml:ns:domain-1.0">
+			<domain:transfer xmlns:domain="urn:ietf:params:xml:ns:domain-1.0">
 				<domain:name>'.$sld.'.'.$tld.'</domain:name>
 			</domain:transfer>
-		<transfer>
+		</transfer>
 		<clTRID>'.mt_rand().mt_rand().'</clTRID>
 	</command>
 </epp>

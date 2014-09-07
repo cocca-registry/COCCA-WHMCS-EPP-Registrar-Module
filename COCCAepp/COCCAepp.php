@@ -744,13 +744,14 @@ function COCCAepp_TransferDomain($params) {
 		$client = _COCCAepp_Client();
 
 		# Initiate transfer
-		$request = $client->request('<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+		$request = $client->request($xml ='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
      <command>
        <transfer op="request">
          <domain:transfer
           xmlns:domain="urn:ietf:params:xml:ns:domain-1.0">
 				<domain:name>'.$sld.'.'.$tld.'</domain:name>
+				<domain:authInfo><domain:pw>'.$transfersecret.'</domain:pw></domain:authInfo>
 			</domain:transfer>
 		</transfer>
 		<clTRID>'.mt_rand().mt_rand().'</clTRID>
@@ -1313,7 +1314,7 @@ break;
 	//Create Domain Technical Contacts
 	$tecHandle = generateHandle();
 	
-$request = $client->request('<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+$request = $client->request($xml ='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
      <command>
        <create>
@@ -1358,7 +1359,7 @@ $request = $client->request('<?xml version="1.0" encoding="UTF-8" standalone="no
 	}
 	# change the domain contacts
 	
-	$request = $client->request('<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+	$request = $client->request($xml='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
   <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
     <command>
       <update>
@@ -1768,8 +1769,7 @@ function COCCAepp_Sync($params) {
 	try {
 		$client = _COCCAepp_Client();
 		# Grab domain info
-		$request = $client->request($xml = '
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+		$request = $client->request($xml ='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
      <command>
        <info>
@@ -1905,23 +1905,22 @@ function COCCAepp_ApproveTransfer($params) {
 	$sld = $params['sld'];
 	$tld = $params['tld'];
 	
-	# Grab domain info
+	# 
 	try {
 		$client = _COCCAepp_Client();
 
-		# Grab domain info
+		# 
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
-     <command>
-	<epp:command>
-		<epp:transfer op="approve">
-			<domain:transfer>
+	<command>
+		<transfer op="approve">
+			<domain:transfer xmlns:domain="urn:ietf:params:xml:ns:domain-1.0">
 				<domain:name>'.$sld.'.'.$tld.'</domain:name>
 			</domain:transfer>
-		</epp:transfer>
-		 <clTRID>'.mt_rand().mt_rand().'</clTRID>
-	</epp:command>
-</epp:epp>
+		</transfer>
+		<clTRID>'.mt_rand().mt_rand().'</clTRID>
+	</command>
+</epp>
 ');
 
 		# Parse XML result
@@ -1959,16 +1958,16 @@ function COCCAepp_CancelTransferRequest($params) {
 
 		# Grab domain info
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-   <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
-     <command>
-    <epp:transfer op="cancel">
-      <domain:transfer>
-        <domain:name>'.$sld.'.'.$tld.'</domain:name>
-      </domain:transfer>
-    </epp:transfer>
-     <clTRID>'.mt_rand().mt_rand().'</clTRID>
-  </epp:command>
-</epp:epp>
+   <epp xmlns="urn:ietf:params:xml:ns:epp1.0">
+	<command>
+		<transfer op="cancel">
+			<domain:transfer xmlns:domain="urn:ietf:params:xml:ns:domain1.0">
+				<domain:name>'.$sld.'.'.$tld.'</domain:name>
+			</domain:transfer>
+		</transfer>
+		<clTRID>'.mt_rand().mt_rand().'</clTRID>
+	</command>
+</epp>
 ');
 
 		# Parse XML result
@@ -2006,17 +2005,16 @@ function COCCAepp_RejectTransfer($params) {
 
 		# Grab domain info
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-   <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
-     <command>
-	<epp:command>
-		<epp:transfer op="reject">
-			<domain:transfer>
+   <epp xmlns="urn:ietf:params:xml:ns:epp1.0">
+	<command>
+		<transfer op="reject">
+			<domain:transfer xmlns:domain="urn:ietf:params:xml:ns:domain1.0">
 				<domain:name>'.$sld.'.'.$tld.'</domain:name>
 			</domain:transfer>
-		</epp:transfer>
-		 <clTRID>'.mt_rand().mt_rand().'</clTRID>
-	</epp:command>
-</epp:epp>
+		</transfer>
+		<clTRID>'.mt_rand().mt_rand().'</clTRID>
+	</command>
+</epp>
 ');
 
 		# Parse XML result

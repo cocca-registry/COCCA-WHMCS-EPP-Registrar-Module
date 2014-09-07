@@ -293,32 +293,6 @@ function COCCAepp_SaveNameservers($params) {
 }
 
 
-
-# NOT IMPLEMENTED
-function COCCAepp_GetRegistrarLock($params) {
-	# Grab variables
-	$sld = $params["sld"];
-	$tld = $params["tld"];
-// Not Implemented
-
-
-
-	# Get lock status
-	$lock = 0;
-	if ($lock=="1") {
-		$lockstatus="locked";
-	} else {
-		$lockstatus="unlocked";
-	}
-	return $lockstatus;
-}
-
-# NOT IMPLEMENTED
-function COCCAepp_SaveRegistrarLock($params) {
-//Not Implemented
-	return $values;
-}
-
 function COCCAepp_LockDomain($params) {
 	# Grab variables
 	$sld = $params["sld"];

@@ -301,6 +301,8 @@ function COCCAepp_GetRegistrarLock($params) {
 	$tld = $params["tld"];
 // Not Implemented
 
+
+
 	# Get lock status
 	$lock = 0;
 	if ($lock=="1") {
@@ -314,6 +316,99 @@ function COCCAepp_GetRegistrarLock($params) {
 # NOT IMPLEMENTED
 function COCCAepp_SaveRegistrarLock($params) {
 //Not Implemented
+	return $values;
+}
+
+function COCCAepp_LockDomain($params) {
+	# Grab variables
+	$sld = $params["sld"];
+	$tld = $params["tld"];
+try {
+		if (!isset($client)) {
+			$client = _COCCAepp_Client();
+		}
+
+		# Lock Domain
+		$result = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<epp xmlns="urn:ietf:params:xml:ns:epp-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <command>
+    <update>
+      <domain:update xmlns:domain="urn:ietf:params:xml:ns:domain-1.0" xsi:schemaLocation="urn:ietf:params:xml:ns:domain-1.0 domain-1.0.xsd">
+        <domain:name>'.$sld.'.'.$tld.'</domain:name>
+        <domain:rem>
+          <domain:status s="clientUpdateProhibited"/>
+          <domain:status s="clientDeleteProhibited"/>
+          <domain:status s="clientTransferProhibited"/>
+        </domain:rem>
+      </domain:update>
+    </update>
+    <clTRID>'.mt_rand().mt_rand().'</clTRID>
+  </command>
+</epp>
+');
+
+	# Parse XML result		
+	$doc= new DOMDocument();
+	$doc->loadXML($result);
+	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
+	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
+	# Check result
+	if($coderes != '1000') {
+		$values["error"] = "Lock Domain($sld.$tld): Code (".$coderes.") ".$msg;
+		return $values;
+	}
+   logModuleCall('COCCAepp', 'Domain Lock', $xml, $request);
+} catch (Exception $e) {
+		$values["error"] = 'Domain Lock/EPP: '.$e->getMessage();
+		return $values;
+	}
+
+	return $values;
+}
+function COCCAepp_UnlockDomain($params) {
+# Grab variables
+	$sld = $params["sld"];
+	$tld = $params["tld"];
+try {
+		if (!isset($client)) {
+			$client = _COCCAepp_Client();
+		}
+
+		# UnLock Domain
+		$result = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<epp xmlns="urn:ietf:params:xml:ns:epp-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <command>
+    <update>
+      <domain:update xmlns:domain="urn:ietf:params:xml:ns:domain-1.0" xsi:schemaLocation="urn:ietf:params:xml:ns:domain-1.0 domain-1.0.xsd">
+        <domain:name>'.$sld.'.'.$tld.'</domain:name>
+        <domain:add>
+          <domain:status s="clientUpdateProhibited"/>
+          <domain:status s="clientDeleteProhibited"/>
+          <domain:status s="clientTransferProhibited"/>
+        </domain:add>
+      </domain:update>
+    </update>
+    <clTRID>'.mt_rand().mt_rand().'</clTRID>
+  </command>
+</epp>
+');
+
+	# Parse XML result		
+	$doc= new DOMDocument();
+	$doc->loadXML($result);
+	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
+	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
+	# Check result
+	if($coderes != '1000') {
+		$values["error"] = "Domain Unlock($sld.$tld): Code (".$coderes.") ".$msg;
+		return $values;
+	}
+   logModuleCall('COCCAepp', 'Domain UnLock', $xml, $request);
+} catch (Exception $e) {
+		$values["error"] = 'Domain UnLock/EPP: '.$e->getMessage();
+		return $values;
+	}
+
 	return $values;
 }
 
@@ -394,7 +489,7 @@ function COCCAepp_RegisterDomain($params) {
 	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 	# Check the result is ok
 	if($coderes == '2303') {
-		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+		$request = $client->request($xml ='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
      <command>
        <create>
@@ -649,13 +744,13 @@ function COCCAepp_TransferDomain($params) {
 		$client = _COCCAepp_Client();
 
 		# Initiate transfer
-		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
-	<command>
-		<transfer op="request">
-			<domain:transfer xmlns:domain="urn:ietf:params:xml:ns:domain-1.0">
+		$request = $client->request('<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+   <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
+     <command>
+       <transfer op="request">
+         <domain:transfer
+          xmlns:domain="urn:ietf:params:xml:ns:domain-1.0">
 				<domain:name>'.$sld.'.'.$tld.'</domain:name>
-				<domain:authInfo><domain:pw>'.$transfersecret.'</domain:pw></domain:authInfo>
 			</domain:transfer>
 		</transfer>
 		<clTRID>'.mt_rand().mt_rand().'</clTRID>
@@ -841,7 +936,7 @@ break;
 
      
 	# Grab contact info
-	$result = $client->request($xml = '<epp xmlns="urn:ietf:params:xml:ns:epp-1.0"
+	$result = $client->request($xml ='<epp xmlns="urn:ietf:params:xml:ns:epp-1.0"
                                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                                 xsi:schemaLocation="urn:ietf:params:xml:ns:epp-1.0 epp-1.0.xsd">
                                     <command>
@@ -1218,7 +1313,7 @@ break;
 	//Create Domain Technical Contacts
 	$tecHandle = generateHandle();
 	
-$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+$request = $client->request('<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
      <command>
        <create>
@@ -1263,7 +1358,7 @@ $request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standal
 	}
 	# change the domain contacts
 	
-	$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+	$request = $client->request('<?xml version="1.0" encoding="UTF-8" standalone="no"?>
   <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
     <command>
       <update>
@@ -1673,7 +1768,8 @@ function COCCAepp_Sync($params) {
 	try {
 		$client = _COCCAepp_Client();
 		# Grab domain info
-		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+		$request = $client->request($xml = '
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
      <command>
        <info>
@@ -1815,16 +1911,17 @@ function COCCAepp_ApproveTransfer($params) {
 
 		# Grab domain info
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
-	<command>
-		<transfer op="approve">
-			<domain:transfer xmlns:domain="urn:ietf:params:xml:ns:domain-1.0">
+   <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
+     <command>
+	<epp:command>
+		<epp:transfer op="approve">
+			<domain:transfer>
 				<domain:name>'.$sld.'.'.$tld.'</domain:name>
 			</domain:transfer>
-		</transfer>
-		<clTRID>'.mt_rand().mt_rand().'</clTRID>
-	</command>
-</epp>
+		</epp:transfer>
+		 <clTRID>'.mt_rand().mt_rand().'</clTRID>
+	</epp:command>
+</epp:epp>
 ');
 
 		# Parse XML result
@@ -1862,16 +1959,16 @@ function COCCAepp_CancelTransferRequest($params) {
 
 		# Grab domain info
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
-	<command>
-		<transfer op="cancel">
-			<domain:transfer xmlns:domain="urn:ietf:params:xml:ns:domain-1.0">
-				<domain:name>'.$sld.'.'.$tld.'</domain:name>
-			</domain:transfer>
-		</transfer>
-		<clTRID>'.mt_rand().mt_rand().'</clTRID>
-	</command>
-</epp>
+   <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
+     <command>
+    <epp:transfer op="cancel">
+      <domain:transfer>
+        <domain:name>'.$sld.'.'.$tld.'</domain:name>
+      </domain:transfer>
+    </epp:transfer>
+     <clTRID>'.mt_rand().mt_rand().'</clTRID>
+  </epp:command>
+</epp:epp>
 ');
 
 		# Parse XML result
@@ -1909,16 +2006,17 @@ function COCCAepp_RejectTransfer($params) {
 
 		# Grab domain info
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
-	<command>
-		<transfer op="reject">
-			<domain:transfer xmlns:domain="urn:ietf:params:xml:ns:domain-1.0">
+   <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
+     <command>
+	<epp:command>
+		<epp:transfer op="reject">
+			<domain:transfer>
 				<domain:name>'.$sld.'.'.$tld.'</domain:name>
 			</domain:transfer>
-		</transfer>
-		<clTRID>'.mt_rand().mt_rand().'</clTRID>
-	</command>
-</epp>
+		</epp:transfer>
+		 <clTRID>'.mt_rand().mt_rand().'</clTRID>
+	</epp:command>
+</epp:epp>
 ');
 
 		# Parse XML result

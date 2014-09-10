@@ -160,7 +160,7 @@ function COCCAepp_SaveNameservers($params) {
 	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 	# Check if result is ok
-	if($coderes != '1000') {
+	if(eppSuccess($coderes)) {
 		$values["error"] = "Could not Create host($nameservers[$i]): Code ($coderes) $msg";
 		return $values;
 	}
@@ -227,7 +227,7 @@ function COCCAepp_SaveNameservers($params) {
 	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 	# Check if result is ok
-	if($coderes != '1000') {
+	if(eppSuccess($coderes)) {
 		$values["error"] = "SaveNameservers/domain-info($sld.$tld): Code ($coderes) $msg";
 		return $values;
 	}
@@ -276,7 +276,7 @@ function COCCAepp_SaveNameservers($params) {
 	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 	# Check if result is ok
-	if($coderes != '1000') {
+	if(eppSuccess($coderes)) {
 		$values["error"] = "SaveNameservers/domain-update($sld.$tld): Code ($coderes) $msg";
 		return $values;
 	}
@@ -420,7 +420,7 @@ function COCCAepp_RegisterDomain($params) {
 	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 	# Check if result is ok
-	if($coderes != '1000') {
+	if(eppSuccess($coderes)) {
 		$values["error"] = "Could not Create host($nameservers[$i]): Code ($coderes) $msg";
 		return $values;
 	}
@@ -510,7 +510,7 @@ function COCCAepp_RegisterDomain($params) {
 	# Pull off status
 	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-	if($coderes == '1000') {
+	if(eppSuccess($coderes)) {
 		$values['contact'] = 'Contact Created';
 	} else if($coderes == '2302') { 
 		$values['contact'] = 'Contact Already exists';
@@ -559,7 +559,7 @@ function COCCAepp_RegisterDomain($params) {
 	# Pull off status
 	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-	if($coderes == '1000') {
+	if(eppSuccess($coderes)) {
 		$values['contact'] = 'Contact Created';
 	} else if($coderes == '2302') { 
 		$values['contact'] = 'Contact Already exists';
@@ -599,7 +599,7 @@ function COCCAepp_RegisterDomain($params) {
 
 	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-	if($coderes != '1000') {
+	if(eppSuccess($coderes)) {
 		$values["error"] = "RegisterDomain/domain-create($sld.$tld): Code ($coderes) $msg";
 		return $values;
 	}
@@ -670,7 +670,7 @@ function COCCAepp_TransferDomain($params) {
 		$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 		$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 		# We should get a 1001 back
-		if($coderes != '1001') {
+		if(eppSuccess($coderes)) {
 			$values["error"] = "TransferDomain/domain-transfer($sld.$tld): Code ($coderes) $msg";
 			return $values;
 		}
@@ -723,7 +723,7 @@ function COCCAepp_RenewDomain($params) {
 
 		$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 		$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-		if($coderes != '1000') {
+		if(eppSuccess($coderes)) {
 			$values["error"] = "RenewDomain/domain-info($sld.$tld)): Code ($coderes) $msg";
 			return $values;
 		}
@@ -761,7 +761,7 @@ function COCCAepp_RenewDomain($params) {
 
 		$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 		$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-		if($coderes != '1000') {
+		if(eppSuccess($coderes)) {
 			$values["error"] = "RenewDomain/domain-renew($sld.$tld,$expdate): Code (".$coderes.") ".$msg;
 			return $values;
 		}
@@ -812,7 +812,7 @@ function COCCAepp_GetContactDetails($params) {
 	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 	# Check result
-	if($coderes != '1000') {
+	if(eppSuccess($coderes)) {
 		$values["error"] = "GetContactDetails/domain-info($sld.$tld): Code (".$coderes.") ".$msg;
 		return $values;
 	}
@@ -865,7 +865,7 @@ break;
 	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 	# Check result
-	if($coderes != '1000') {
+	if(eppSuccess($coderes)) {
 		$values["error"] = "GetContactDetails/contact-registrant($registrant): Code (".$coderes.") ".$msg;
 		return $values;
 	}
@@ -909,7 +909,7 @@ break;
 	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 
 	# Check results
-                    if($coderes != '1000') {
+                    if(eppSuccess($coderes)) {
 			$values["error"] = "GetContactDetails/contact-info($type): Code (".$coderes.") ".$msg;
 		return $values;
                     }
@@ -1030,7 +1030,7 @@ function COCCAepp_SaveContactDetails($params) {
 	$doc->loadXML($request);
 	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-	if($coderes != '1000') {
+	if(eppSuccess($coderes)) {
 		$values["error"] = "SaveContactDetails/domain-info($sld.$tld): Code (".$coderes.") ".$msg;
 		return $values;
 	}
@@ -1112,7 +1112,7 @@ break;
 
 	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-	if($coderes != '1000') {
+	if(eppSuccess($coderes)) {
 		$values["error"] = "SaveContactDetails/contact-update(registrant): Code ($coderes) $msg";
 		return $values;
 	}
@@ -1161,7 +1161,7 @@ break;
 	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 	
-	if($coderes != '1000') {
+	if(eppSuccess($coderes)) {
 		$values["error"] = "SaveContactDetails/contact-update(Admincontact): Code ($coderes) $msg";
 		return $values;
 	}
@@ -1208,7 +1208,7 @@ break;
 
 	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-	if($coderes != '1000') {
+	if(eppSuccess($coderes)) {
 		$values["error"] = "SaveContactDetails/contact-update(Billing contact): Code ($coderes) $msg";
 		return $values;
 	}
@@ -1257,7 +1257,7 @@ $request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standal
 
 	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-	if($coderes != '1000') {
+	if(eppSuccess($coderes)) {
 		$values["error"] = "SaveContactDetails/contact-update(Technical Contact): Code ($coderes) $msg";
 		return $values;
 	}
@@ -1291,7 +1291,7 @@ $doc= new DOMDocument();
 
 	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-	if($coderes != '1000') {
+	if(eppSuccess($coderes)) {
 		$values["error"] = "Domain contact update error: Code ($coderes) $msg";
 		return $values;
 	}
@@ -1368,7 +1368,7 @@ function COCCAepp_RegisterNameserver($params) {
 		$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 		logModuleCall('COCCAepp', 'SaveHost', $xml, $request);
 		# Check if result is ok
-		if($coderes != '1001') {
+		if(eppSuccess($coderes)) {
 			$values["error"] = "RegisterNameserver($nameserver): Code ($coderes) $msg";
 			return $values;
 		}
@@ -1432,7 +1432,7 @@ function COCCAepp_ModifyNameserver($params) {
 		$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 		$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 		# Check if result is ok
-		if($coderes != '1001') {
+		if(eppSuccess($coderes)) {
 			$values["error"] = "ModifyNameserver/domain-update($nameserver): Code ($coderes) $msg";
 			return $values;
 		}
@@ -1488,7 +1488,7 @@ function COCCAepp_DeleteNameserver($params) {
 		$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 		$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 		# Check if result is ok
-		if($coderes != '1001') {
+		if(eppSuccess($coderes)) {
 			$values["error"] = "DeleteNameserver/domain-update($sld.$tld): Code ($coderes) $msg";
 			return $values;
 		}
@@ -1620,7 +1620,7 @@ function COCCAepp_TransferSync($params) {
 		if ($coderes == '2303') {
 			$values['error'] = "TransferSync/domain-info($domain): Domain not found";
 			return $values;
-		} else if ($coderes != '1000') {
+		} else if (eppSuccess($coderes)) {
 			$values['error'] = "TransferSync/domain-info($domain): Code("._COCCAepp_message($coderes).") $msg";
 			return $values;
 		}
@@ -1702,8 +1702,7 @@ function COCCAepp_Sync($params) {
 			# Code 2303, domain not found
 			$values['error'] = "TransferSync/domain-info($domain): Domain not found";
 			return $values;
-		} else if ($coderes == '1000') {
-			# Code 1000, success
+		} else if (eppSuccess($coderes)) {
 			if (
 				$doc->getElementsByTagName('infData') &&
 				$doc->getElementsByTagName('infData')->item(0)->getElementsByTagName('ns')->item(0) &&
@@ -1790,7 +1789,7 @@ function COCCAepp_RequestDelete($params) {
 		$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 
 		# Check result
-		if($coderes != '1001') {
+		if(eppSuccess($coderes)) {
 			$values['error'] = 'RequestDelete/domain-info('.$sld.'.'.$tld.'): Code('._COCCAepp_message($coderes).") $msg";
 			return $values;
 		}
@@ -1836,7 +1835,7 @@ function COCCAepp_ApproveTransfer($params) {
 		$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 
 		# Check result
-		if($coderes != '1000') {
+		if(eppSuccess($coderes)) {
 			$values['error'] = 'ApproveTransfer/domain-info('.$sld.'.'.$tld.'): Code('._COCCAepp_message($coderes).") $msg";
 			return $values;
 		}
@@ -1883,7 +1882,7 @@ function COCCAepp_CancelTransferRequest($params) {
 		$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 
 		# Check result
-		if($coderes != '1000') {
+		if(eppSuccess($coderes)) {
 			$values['error'] = 'CancelTransferRequest/domain-info('.$sld.'.'.$tld.'): Code('._COCCAepp_message($coderes).") $msg";
 			return $values;
 		}
@@ -1930,7 +1929,7 @@ function COCCAepp_RejectTransfer($params) {
 		$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 
 		# Check result
-		if($coderes != '1000') {
+		if(eppSuccess($coderes)) {
 			$values['error'] = 'RejectTransfer/domain-info('.$sld.'.'.$tld.'): Code('._COCCAepp_message($coderes).") $msg";
 			return $values;
 		}
@@ -1956,3 +1955,11 @@ function array_push_assoc($array, $key, $value){
 	$array[$key] = $value;
 	return $array;
 }
+
+function eppSuccess($code) {
+	if ($code >= 1000 && $code < 2000) {
+            return true;
+        }
+	return false;
+}
+

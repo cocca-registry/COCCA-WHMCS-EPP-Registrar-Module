@@ -57,7 +57,7 @@ function COCCAepp_GetNameservers($params) {
 		$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 		$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 		# Check the result is ok
-		if($coderes != '1000') {
+		if(eppSuccess($coderes)) {
 			$values["error"] = "GetNameservers/domain-info($domain): Code ($coderes) $msg";
 			return $values;
 		}
@@ -327,7 +327,7 @@ try {
 	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 	# Check result
-	if($coderes != '1000') {
+	if(eppSuccess($coderes)) {
 		$values["error"] = "Lock Domain($sld.$tld): Code (".$coderes.") ".$msg;
 		return $values;
 	}
@@ -373,7 +373,7 @@ try {
 	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 	# Check result
-	if($coderes != '1000') {
+	if(eppSuccess($coderes)) {
 		$values["error"] = "Domain Unlock($sld.$tld): Code (".$coderes.") ".$msg;
 		return $values;
 	}
@@ -739,7 +739,6 @@ function COCCAepp_TransferDomain($params) {
 
 		$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 		$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-		# We should get a 1001 back
 		if(eppSuccess($coderes)) {
 			$values["error"] = "TransferDomain/domain-transfer($sld.$tld): Code ($coderes) $msg";
 			return $values;

@@ -306,7 +306,7 @@ function COCCAepp_GetRegistrarLock($params) {
 	$sld = $params["sld"];
 	$tld = $params["tld"];
 // Not Implemented
-  
+
 	# Get lock status
 	$lock = 0;
 	$lock=$params["lockenabled"];
@@ -343,7 +343,7 @@ try {
 		}
 
 		# Lock Domain
-		$result = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <epp xmlns="urn:ietf:params:xml:ns:epp-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <command>
     <update>
@@ -363,7 +363,9 @@ try {
 
 	# Parse XML result		
 	$doc= new DOMDocument();
-	$doc->loadXML($result);
+	$doc->loadXML($request);
+    logModuleCall('COCCAepp', 'Domain Lock', $xml, $request);
+
 	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 	# Check result
@@ -371,7 +373,6 @@ try {
 		$values["error"] = "Lock Domain($sld.$tld): Code (".$coderes.") ".$msg;
 		return $values;
 	}
-   logModuleCall('COCCAepp', 'Domain Lock', $xml, $request);
 } catch (Exception $e) {
 		$values["error"] = 'Domain Lock/EPP: '.$e->getMessage();
 		return $values;
@@ -390,13 +391,13 @@ try {
 		}
 
 		# UnLock Domain
-		$result = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <epp xmlns="urn:ietf:params:xml:ns:epp-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <command>
     <update>
       <domain:update xmlns:domain="urn:ietf:params:xml:ns:domain-1.0" xsi:schemaLocation="urn:ietf:params:xml:ns:domain-1.0 domain-1.0.xsd">
         <domain:name>'.$sld.'.'.$tld.'</domain:name>
-        <domain:rem
+        <domain:rem>
           <domain:status s="clientUpdateProhibited"/>
           <domain:status s="clientDeleteProhibited"/>
           <domain:status s="clientTransferProhibited"/>
@@ -410,7 +411,9 @@ try {
 
 	# Parse XML result		
 	$doc= new DOMDocument();
-	$doc->loadXML($result);
+	$doc->loadXML($request);
+    logModuleCall('COCCAepp', 'Domain UnLock', $xml, $request);
+
 	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 	# Check result
@@ -418,7 +421,6 @@ try {
 		$values["error"] = "Domain Unlock($sld.$tld): Code (".$coderes.") ".$msg;
 		return $values;
 	}
-   logModuleCall('COCCAepp', 'Domain UnLock', $xml, $request);
 } catch (Exception $e) {
 		$values["error"] = 'Domain UnLock/EPP: '.$e->getMessage();
 		return $values;

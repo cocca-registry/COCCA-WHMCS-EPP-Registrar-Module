@@ -21,6 +21,14 @@ function COCCAepp_AdminCustomButtonArray() {
 	return $buttonarray;
 }
 
+function COCCAepp_ClientAreaCustomButtonArray() {
+	$buttonarray = array(
+	"Lock Domain" => "LockDomain",
+	"Unlock Domain" => "UnlockDomain",
+	);
+	return $buttonarray;
+}
+
 # Function to return current nameservers
 function COCCAepp_GetNameservers($params) {
 	# Grab variables
@@ -293,6 +301,38 @@ function COCCAepp_SaveNameservers($params) {
 }
 
 
+function COCCAepp_GetRegistrarLock($params) {
+	# Grab variables
+	$sld = $params["sld"];
+	$tld = $params["tld"];
+// Not Implemented
+  
+	# Get lock status
+	$lock = 0;
+	$lock=$params["lockenabled"];
+	if ($lock=="1") {
+		$lockstatus="locked";
+	} else {
+		$lockstatus="unlocked";
+	}
+	return $lockstatus;
+}
+
+# NOT IMPLEMENTED
+function COCCAepp_SaveRegistrarLock($params) {
+	# Grab variables
+	$sld = $params["sld"];
+	$tld = $params["tld"];
+if (strcmp($params["lockenabled"], "locked") == 0) {
+	LockDomain($params);
+        $lockstatus = "1";
+    } else {
+		UnlockDomain($params);
+        $lockstatus = "0";
+    }
+	return $values;
+}
+
 function COCCAepp_LockDomain($params) {
 	# Grab variables
 	$sld = $params["sld"];
@@ -309,11 +349,11 @@ try {
     <update>
       <domain:update xmlns:domain="urn:ietf:params:xml:ns:domain-1.0" xsi:schemaLocation="urn:ietf:params:xml:ns:domain-1.0 domain-1.0.xsd">
         <domain:name>'.$sld.'.'.$tld.'</domain:name>
-        <domain:rem>
+        <domain:add>
           <domain:status s="clientUpdateProhibited"/>
           <domain:status s="clientDeleteProhibited"/>
           <domain:status s="clientTransferProhibited"/>
-        </domain:rem>
+        </domain:add>
       </domain:update>
     </update>
     <clTRID>'.mt_rand().mt_rand().'</clTRID>
@@ -339,6 +379,7 @@ try {
 
 	return $values;
 }
+
 function COCCAepp_UnlockDomain($params) {
 # Grab variables
 	$sld = $params["sld"];
@@ -355,11 +396,11 @@ try {
     <update>
       <domain:update xmlns:domain="urn:ietf:params:xml:ns:domain-1.0" xsi:schemaLocation="urn:ietf:params:xml:ns:domain-1.0 domain-1.0.xsd">
         <domain:name>'.$sld.'.'.$tld.'</domain:name>
-        <domain:add>
+        <domain:rem
           <domain:status s="clientUpdateProhibited"/>
           <domain:status s="clientDeleteProhibited"/>
           <domain:status s="clientTransferProhibited"/>
-        </domain:add>
+        </domain:rem>
       </domain:update>
     </update>
     <clTRID>'.mt_rand().mt_rand().'</clTRID>

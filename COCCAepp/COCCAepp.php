@@ -955,7 +955,6 @@ function COCCAepp_GetContactDetails($params) {
         }
         foreach($contactIDs as $id => $k) {
             $contactIDs[$id] = getContactDetail($client, $id);
-            file_put_contents('/tmp/whmcs.log', "Getting ContactID: $id\n", FILE_APPEND);
         }
 
         $Contacts["Admin"]=$domaininfo["admin"];

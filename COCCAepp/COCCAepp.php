@@ -896,8 +896,7 @@ function COCCAepp_GetContactDetails($params) {
 	# Grab variables
 	$sld = $params["sld"];
 	$tld = $params["tld"];
-	
-	
+
 	# Get client instance
 	try {
 		if (!isset($client)) {
@@ -915,160 +914,131 @@ function COCCAepp_GetContactDetails($params) {
     </info>
     <clTRID>'.mt_rand().mt_rand().'</clTRID>
   </command>
-</epp>
-');
+</epp>');
 
-	# Parse XML result		
-	$doc= new DOMDocument();
-	$doc->loadXML($result);
-	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
-	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-	# Check result
-	if(!eppSuccess($coderes)) {
-		$values["error"] = "GetContactDetails/domain-info($sld.$tld): Code (".$coderes.") ".$msg;
+        # Parse XML result
+        $doc= new DOMDocument();
+        $doc->loadXML($result);
+        logModuleCall('COCCAepp', 'Get Contact Details', $xml, $result);
+
+        $coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
+        $msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
+
+        # Check result
+        if(!eppSuccess($coderes)) {
+            $values["error"] = "GetContactDetails/domain-info($sld.$tld): Code (".$coderes.") ".$msg;
+            return $values;
+        }
+
+        # Grab contact Handles
+        $registrant = $doc->getElementsByTagName('registrant')->item(0)->nodeValue;
+        if (empty($registrant)) {
+            $values["error"] = "GetContactDetails/domain-info($sld.$tld): Registrant info not available";
+            return $values;
+        }
+
+        $domaininfo=array();
+        for ($i=0; $i<=2; $i++) {
+            $x=$doc->getElementsByTagName('contact')->item($i);
+            if(!empty($x)){
+                $domaininfo[$doc->getElementsByTagName('contact')->item($i)->getAttribute('type')]=$doc->getElementsByTagName('contact')->item($i)->nodeValue;
+            }
+            else{
+                break;
+            }
+        }
+
+        $contactIDs[$registrant] = array();
+        foreach($domaininfo as $id) {
+            if($id != '')
+                $contactIDs[$id] = array();
+        }
+        foreach($contactIDs as $id => $k) {
+            $contactIDs[$id] = getContactDetail($client, $id);
+            file_put_contents('/tmp/whmcs.log', "Getting ContactID: $id\n", FILE_APPEND);
+        }
+
+        $Contacts["Admin"]=$domaininfo["admin"];
+        $Contacts["Tech"]=$domaininfo["tech"];
+        $Contacts["Billing"]=$domaininfo["billing"];
+
+        # Grab Registrant Contact
+        $values["Registrant"] = $contactIDs[$registrant];
+
+        #Get Admin, Tech and Billing Contacts
+        foreach ($Contacts as $type => $value) {
+            if ($value!=""){
+                $values["$type"] = $contactIDs[$value];
+            }else{
+                $values["$type"]["Contact Name"] = "";
+                $values["$type"]["Organisation"] = "";
+                $values["$type"]["Address line 1"] = "";
+                $values["$type"]["Address line 2"] = "";
+                $values["$type"]["TownCity"] = "";
+                $values["$type"]["State"] = "";
+                $values["$type"]["Zip code"] = "";
+                $values["$type"]["Country Code"] = "";
+                $values["$type"]["Phone"] = "";
+                $values["$type"]["Email"] = "";
+            }
+        }
+
+        return $values;
+
+    } catch (Exception $e) {
+		$values["error"] = 'GetContactDetails/EPP: '.$e->getMessage();
 		return $values;
 	}
-   logModuleCall('COCCAepp', 'Get Contact Details', $xml, $request);
-
-	# Grab contact Handles
-	$registrant = $doc->getElementsByTagName('registrant')->item(0)->nodeValue;
-	if (empty($registrant)) {
-		$values["error"] = "GetContactDetails/domain-info($sld.$tld): Registrant info not available";
-		return $values;
-	}
-	$b=count($doc->getElementsByTagName('contact'));
-	$domaininfo=array();
-    for ($i=0; $i<=2; $i++) {
-    $x=$doc->getElementsByTagName('contact')->item($i);
-    if(!empty($x)){
-   // $domaininfo=$doc->getElementsByTagName('contact')->item($i)->getAttribute('type')=$doc->getElementsByTagName('contact')->item($i)->nodeValue;
-    $domaininfo[$doc->getElementsByTagName('contact')->item($i)->getAttribute('type')]=$doc->getElementsByTagName('contact')->item($i)->nodeValue;
 }
-else{
-break;
-}}
-    $Contacts["admin"]=$domaininfo["admin"];
-    $Contacts["tech"]=$domaininfo["tech"];
-  	$Contacts["billing"]=$domaininfo["billing"];
 
-     
-	# Grab contact info
-	$result = $client->request($xml ='<epp xmlns="urn:ietf:params:xml:ns:epp-1.0"
-                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                                xsi:schemaLocation="urn:ietf:params:xml:ns:epp-1.0 epp-1.0.xsd">
-                                    <command>
-                                        <info>
-                                            <contact:info xmlns:contact="urn:ietf:params:xml:ns:contact-1.0"
-                                            xsi:schemaLocation="urn:ietf:params:xml:ns:contact-1.0
-                                            contact-1.0.xsd">
-                                                <contact:id>'.$registrant.'</contact:id>
-                                            </contact:info>
-                                        </info>
-                                        <clTRID>'.mt_rand().mt_rand().'</clTRID>
-                                    </command>
-                            </epp>
-');
-
-	# Parse XML result
-	$doc= new DOMDocument();
-	$doc->loadXML($result);
-	logModuleCall('COCCAepp', 'GetContactDetails', $xml, $result);
-
-	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
-	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-	# Check result
-	if(!eppSuccess($coderes)) {
-		$values["error"] = "GetContactDetails/contact-registrant($registrant): Code (".$coderes.") ".$msg;
-		return $values;
-	}
-
-	# Setup return values
-	$values["Registrant"]["Contact Name"] = $doc->getElementsByTagName('name')->item(0)->nodeValue;
-	$values["Registrant"]["Organisation"] = $doc->getElementsByTagName('org')->item(0)->nodeValue;
-	$values["Registrant"]["Address line 1"] = $doc->getElementsByTagName('street')->item(0)->nodeValue;
-	$values["Registrant"]["Address line 2"] = $doc->getElementsByTagName('street')->item(1)->nodeValue;
-	$values["Registrant"]["TownCity"] = $doc->getElementsByTagName('city')->item(0)->nodeValue;
-	$values["Registrant"]["State"] = $doc->getElementsByTagName('sp')->item(0)->nodeValue;
-	$values["Registrant"]["Zip code"] = $doc->getElementsByTagName('pc')->item(0)->nodeValue;
-	$values["Registrant"]["Country Code"] = $doc->getElementsByTagName('cc')->item(0)->nodeValue;
-	$values["Registrant"]["Phone"] = $doc->getElementsByTagName('voice')->item(0)->nodeValue;
-	$values["Registrant"]["Email"] = $doc->getElementsByTagName('email')->item(0)->nodeValue;
-	
-	#Get Org, Adm and Tech Contacts
-    foreach ($Contacts as $type => $value) {
-    if ($value!=""){
-   $request =  $client->request($xml ='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+function getContactDetail($client, $contactID) {
+    $request =  $client->request($xml ='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
      <command>
        <info>
          <contact:info
           xmlns:contact="urn:ietf:params:xml:ns:contact-1.0">
-          <contact:id>'.$value.'</contact:id>
+          <contact:id>'.$contactID.'</contact:id>
          </contact:info>
        </info>
     <clTRID>'.mt_rand().mt_rand().'</clTRID>
    </command>
    </epp>');
 
-                    
+    # Parse XML result
+    $doc= new DOMDocument();
+    $doc->loadXML($request);
+    logModuleCall('COCCAepp', 'GetContactDetails', $xml, $request);
 
-                   # Parse XML result
-	$doc= new DOMDocument();
-	$doc->loadXML($request);
-	logModuleCall('COCCAepp', 'GetContactDetails', $xml, $request);
+    $coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
+    $msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 
-	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
-	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
+    # Check results
+    if(!eppSuccess($coderes)) {
+        throw new Exception("contact-info($contactID): Code (".$coderes.") ".$msg);
+    }
 
-	# Check results
-                    if(!eppSuccess($coderes)) {
-			$values["error"] = "GetContactDetails/contact-info($type): Code (".$coderes.") ".$msg;
-		return $values;
-                    }
-    
-	$values["$type"]["Contact Name"] = $doc->getElementsByTagName('name')->item(0)->nodeValue;
-	$values["$type"]["Organisation"] = $doc->getElementsByTagName('org')->item(0)->nodeValue;
-	$values["$type"]["Address line 1"] = $doc->getElementsByTagName('street')->item(0)->nodeValue;
-	$values["$type"]["Address line 2"] = $doc->getElementsByTagName('street')->item(1)->nodeValue;
-	$values["$type"]["TownCity"] = $doc->getElementsByTagName('city')->item(0)->nodeValue;
-	$values["$type"]["State"] = $doc->getElementsByTagName('sp')->item(0)->nodeValue;
-	$values["$type"]["Zip code"] = $doc->getElementsByTagName('pc')->item(0)->nodeValue;
-	$values["$type"]["Country Code"] = $doc->getElementsByTagName('cc')->item(0)->nodeValue;
-	$values["$type"]["Phone"] = $doc->getElementsByTagName('voice')->item(0)->nodeValue;
-	$values["$type"]["Email"] = $doc->getElementsByTagName('email')->item(0)->nodeValue;
-                    }else{
-                    $values["$type"]["Contact Name"] = "";
-	$values["$type"]["Organisation"] = "";
-	$values["$type"]["Address line 1"] = "";
-	$values["$type"]["Address line 2"] = "";
-	$values["$type"]["TownCity"] = "";
-	$values["$type"]["State"] = "";
-	$values["$type"]["Zip code"] = "";
-	$values["$type"]["Country Code"] = "";
-	$values["$type"]["Phone"] = "";
-	$values["$type"]["Email"] = "";
-                    }
-                    }  
+    $contact["Contact Name"] = $doc->getElementsByTagName('name')->item(0)->nodeValue;
+    $contact["Organisation"] = $doc->getElementsByTagName('org')->item(0)->nodeValue;
+    $contact["Address line 1"] = $doc->getElementsByTagName('street')->item(0)->nodeValue;
+    $contact["Address line 2"] = $doc->getElementsByTagName('street')->item(1)->nodeValue;
+    $contact["TownCity"] = $doc->getElementsByTagName('city')->item(0)->nodeValue;
+    $contact["State"] = $doc->getElementsByTagName('sp')->item(0)->nodeValue;
+    $contact["Zip code"] = $doc->getElementsByTagName('pc')->item(0)->nodeValue;
+    $contact["Country Code"] = $doc->getElementsByTagName('cc')->item(0)->nodeValue;
+    $contact["Phone"] = $doc->getElementsByTagName('voice')->item(0)->nodeValue;
+    $contact["Email"] = $doc->getElementsByTagName('email')->item(0)->nodeValue;
 
-	return $values;
-
-} catch (Exception $e) {
-		$values["error"] = 'GetContactDetails/EPP: '.$e->getMessage();
-		return $values;
-	}
+    return $contact;
 }
-
-
 
 # Function to save contact details
 function COCCAepp_SaveContactDetails($params) {
 	# Grab variables
 	$tld = $params["tld"];
 	$sld = $params["sld"];
-	
-	
-	
-		# Registrant details
+
+	# Registrant details
 	$registrant_name = $params["contactdetails"]["Registrant"]["Contact Name"];
 	$registrant_org = $params["contactdetails"]["Registrant"]["Organisation"];
 	$registrant_address1 =  $params["contactdetails"]["Registrant"]["Address line 1"];

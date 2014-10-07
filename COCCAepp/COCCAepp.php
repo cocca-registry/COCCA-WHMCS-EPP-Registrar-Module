@@ -1038,6 +1038,7 @@ function COCCAepp_SaveContactDetails($params) {
 	$sld = $params["sld"];
 
 	# Registrant details
+    $registrant_details = $params["contactdetails"]["Registrant"];
 	$registrant_name = $params["contactdetails"]["Registrant"]["Contact Name"];
 	$registrant_org = $params["contactdetails"]["Registrant"]["Organisation"];
 	$registrant_address1 =  $params["contactdetails"]["Registrant"]["Address line 1"];
@@ -1047,54 +1048,18 @@ function COCCAepp_SaveContactDetails($params) {
 	$registrant_zipcode = $params["contactdetails"]["Registrant"]["Zip code"];
 	$registrant_countrycode = $params["contactdetails"]["Registrant"]["Country Code"];
 	$registrant_phone = $params["contactdetails"]["Registrant"]["Phone"];
-	#$registrant_fax = '',
 	$registrant_email = $params["contactdetails"]["Registrant"]["Email"];
-    //Billing Details
-    # Billing Details
-    $billing_name = $params["contactdetails"]["billing"]["Contact Name"];
-    $billing_org = $params["contactdetails"]["billing"]["Organisation"];
-    $billing_address1 =  $params["contactdetails"]["billing"]["Address line 1"];
-    $billing_address2 = $params["contactdetails"]["billing"]["Address line 2"];
-    $billing_town = $params["contactdetails"]["billing"]["TownCity"];
-    $billing_state = $params["contactdetails"]["billing"]["State"];
-    $billing_zipcode = $params["contactdetails"]["billing"]["Zip code"];
-    $billing_countrycode = $params["contactdetails"]["billing"]["Country Code"];
-    $billing_phone = $params["contactdetails"]["billing"]["Phone"];
-    #$registrant_fax = '',
-    $billing_email = $params["contactdetails"]["billing"]["Email"];
-    
-    //Admin Details
-    $admin_name = $params["contactdetails"]["admin"]["Contact Name"];
-    $admin_org = $params["contactdetails"]["admin"]["Organisation"];
-    $admin_address1 =  $params["contactdetails"]["admin"]["Address line 1"];
-    $admin_address2 = $params["contactdetails"]["admin"]["Address line 2"];
-    $admin_town = $params["contactdetails"]["admin"]["TownCity"];
-    $admin_state = $params["contactdetails"]["admin"]["State"];
-    $admin_zipcode = $params["contactdetails"]["admin"]["Zip code"];
-    $admin_countrycode = $params["contactdetails"]["admin"]["Country Code"];
-    $admin_phone = $params["contactdetails"]["admin"]["Phone"];
-    #$registrant_fax = '',
-    $admin_email = $params["contactdetails"]["admin"]["Email"];
-    
-    $tech_name = $params["contactdetails"]["tech"]["Contact Name"];
-    $tech_org = $params["contactdetails"]["tech"]["Organisation"];
-    $tech_address1 =  $params["contactdetails"]["tech"]["Address line 1"];
-    $tech_address2 = $params["contactdetails"]["tech"]["Address line 2"];
-    $tech_town = $params["contactdetails"]["tech"]["TownCity"];
-    $tech_state = $params["contactdetails"]["tech"]["State"];
-    $tech_zipcode = $params["contactdetails"]["tech"]["Zip code"];
-    $tech_countrycode = $params["contactdetails"]["tech"]["Country Code"];
-    $tech_phone = $params["contactdetails"]["tech"]["Phone"];
-    #$registrant_fax = '',
-    $tech_email = $params["contactdetails"]["tech"]["Email"];
 
+    $billing_details = $params["contactdetails"]["Billing"];
+    $admin_details = $params["contactdetails"]["Admin"];
+    $tech_details = $params["contactdetails"]["Tech"];
 
 	# Get client instance
 	try {
 		$client = _COCCAepp_Client();
 
 		# Grab domain info
-		$request = $client->request($xml = '
+		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <epp:epp xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:epp="urn:ietf:params:xml:ns:epp-1.0"
 		xmlns:domain="urn:ietf:params:xml:ns:domain-1.0" xsi:schemaLocation="urn:ietf:params:xml:ns:epp-1.0 epp-1.0.xsd">
 	<epp:command>
@@ -1104,58 +1069,60 @@ function COCCAepp_SaveContactDetails($params) {
 			</domain:info>
 		</epp:info>
 	</epp:command>
-</epp:epp>
-');
-	# Parse XML	result
-	$doc= new DOMDocument();
-	$doc->loadXML($request);
-	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
-	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-	if(!eppSuccess($coderes)) {
-		$values["error"] = "SaveContactDetails/domain-info($sld.$tld): Code (".$coderes.") ".$msg;
-		return $values;
-	}
+</epp:epp>');
 
-	$values["status"] = $msg;
-# Grab Registrant contact Handles
-	$registrant = $doc->getElementsByTagName('registrant')->item(0)->nodeValue;
-	if (empty($registrant)) {
-		$values["error"] = "GetContactDetails/domain-info($sld.$tld): Registrant info not available";
-		return $values;
-	}
-	$domaininfo=array();
-    for ($i=0; $i<=2; $i++) {
-    $x=$doc->getElementsByTagName('contact')->item($i);
-    if(!empty($x)){
-    $domaininfo[$doc->getElementsByTagName('contact')->item($i)->getAttribute('type')]=$doc->getElementsByTagName('contact')->item($i)->nodeValue;
-}
-else{
-break;
-}}
-      $Contacts["admin"]=$domaininfo["admin"];
-      $Contacts["tech"]=$domaininfo["tech"];
-  	$Contacts["billing"]=$domaininfo["billing"];
+	    # Parse XML	result
+        $doc= new DOMDocument();
+        $doc->loadXML($request);
+        $coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
+        $msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
+        if(!eppSuccess($coderes)) {
+            $values["error"] = "SaveContactDetails/domain-info($sld.$tld): Code (".$coderes.") ".$msg;
+            return $values;
+        }
+
+        $values["status"] = $msg;
+        # Grab Registrant contact Handles
+        $registrant = $doc->getElementsByTagName('registrant')->item(0)->nodeValue;
+        if (empty($registrant)) {
+            $values["error"] = "GetContactDetails/domain-info($sld.$tld): Registrant info not available";
+            return $values;
+        }
+        $domaininfo=array();
+        for ($i=0; $i<=2; $i++) {
+            $x=$doc->getElementsByTagName('contact')->item($i);
+            if(!empty($x)){
+                $domaininfo[$doc->getElementsByTagName('contact')->item($i)->getAttribute('type')]=$doc->getElementsByTagName('contact')->item($i)->nodeValue;
+            }
+            else{
+                break;
+            }
+        }
+/*
+        foreach($contactIDs as $id => $k) {
+            $contactIDs[$id] = getContactDetail($client, $id);
+        }
+*/
+        $Contacts["admin"]=$domaininfo["admin"];
+        $Contacts["tech"]=$domaininfo["tech"];
+      	$Contacts["billing"]=$domaininfo["billing"];
+
   	 	// Build contacts to remove
-  if(isset($Contacts["admin"])){
-		$rem_conts .= '
+        if(isset($Contacts["admin"])){
+            $rem_conts .= '
+        <domain:contact type="admin">'.$Contacts["admin"].'</domain:contact>';
+    	}
+        if(isset($Contacts["tech"])){
+            $rem_conts .= '
+        <domain:contact type="tech">'.$Contacts["tech"].'</domain:contact>';
+        }
+        if(isset($Contacts["billing"])){
+            $rem_conts .= '
+        <domain:contact type="billing">'.$Contacts["billing"].'</domain:contact>';
+        }
 
-	<domain:contact type="admin">'.$Contacts["admin"].'</domain:contact>
-';
-	}
-	if(isset($Contacts["tech"])){
-		$rem_conts .= '
-
-	<domain:contact type="tech">'.$Contacts["tech"].'</domain:contact>
-';
-	}
-	if(isset($Contacts["billing"])){
-		$rem_conts .= '
-
-	<domain:contact type="billing">'.$Contacts["billing"].'</domain:contact>
-';
-	}
-	# Save Registrant contact details
-	$request = $client->request($xml ='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+    	# Save Registrant contact details
+    	$request = $client->request($xml ='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
      <command>
        <update>
@@ -1183,168 +1150,28 @@ break;
 		</update>
 		<clTRID>'.mt_rand().mt_rand().'</clTRID>
 	</command>
-</epp>
-');
+</epp>');
 
-	# Parse XML result
-	$doc= new DOMDocument();
-	$doc->loadXML($request);
-	logModuleCall('COCCAepp', 'SaveContactDetails', $xml, $request);
+        # Parse XML result
+        $doc= new DOMDocument();
+        $doc->loadXML($request);
+        logModuleCall('COCCAepp', 'SaveContactDetails', $xml, $request);
 
-	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
-	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-	if(!eppSuccess($coderes)) {
-		$values["error"] = "SaveContactDetails/contact-update(registrant): Code ($coderes) $msg";
-		return $values;
-	}
+        $coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
+        $msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
+        if(!eppSuccess($coderes)) {
+            $values["error"] = "SaveContactDetails/contact-update(registrant): Code ($coderes) $msg";
+            return $values;
+        }
 	
-	# Save Admin contact details
-	//Create Domain Admin
-	
-	$admHandle = generateHandle();
-	$result = $client->request($xml ='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-   <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
-     <command>
-       <create>
-         <contact:create
-          xmlns:contact="urn:ietf:params:xml:ns:contact-1.0">
-				<contact:id>'.$admHandle.'</contact:id>
-				<contact:postalInfo type="int">
-					<contact:name>'.$admin_name.'</contact:name>
-					<contact:org>'.$admin_org.'</contact:org>
-					<contact:addr>
-						<contact:street>'.$admin_address1.'</contact:street>
-						<contact:street>'.$admin_address2.'</contact:street>
-						<contact:city>'.$admin_town.'</contact:city>
-						<contact:sp>'.$admin_state.'</contact:sp>
-						<contact:pc>'.$admin_zipcode.'</contact:pc>
-						<contact:cc>'.$admin_countrycode.'</contact:cc>
-					</contact:addr>
-				</contact:postalInfo>
-				<contact:voice x="">'.$admin_phone.'</contact:voice>
-				
-				<contact:email>'.$admin_email.'</contact:email>
-				<contact:authInfo>
-					<contact:pw></contact:pw>
-				</contact:authInfo>
-			</contact:create>
-		</create>
-		<clTRID>'.mt_rand().mt_rand().'</clTRID>
-	</command>
-</epp>
-');
+        # Create new contact details
+        $admHandle = createContact($client, $admin_details, 'Admin');
+        $bilHandle = createContact($client, $billing_details, 'Billing');
+        $tecHandle = createContact($client, $tech_details, 'Tech');
 
-	# Parse XML result
-	$doc = new DOMDocument();
-	$doc->loadXML($request);
-	logModuleCall('COCCAepp', 'SaveContactDetails', $xml, $request);
+        # change the domain contacts
 
-	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
-	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-	
-	if(!eppSuccess($coderes)) {
-		$values["error"] = "SaveContactDetails/contact-update(Admincontact): Code ($coderes) $msg";
-		return $values;
-	}
-	
-	//Create Billing Contacts
-	$bilHandle = generateHandle();
-	
-	$request = $client->request('<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-   <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
-     <command>
-       <create>
-         <contact:create
-          xmlns:contact="urn:ietf:params:xml:ns:contact-1.0">
-				<contact:id>'.$bilHandle.'</contact:id>
-				<contact:postalInfo type="int">
-					<contact:name>'.$billing_name.' </contact:name>
-					 <contact:org>'.$billing_org.'</contact:org>
-					<contact:addr>
-						<contact:street>'.$billing_address1.'</contact:street>
-						<contact:street>'.$billing_address1.'</contact:street>
-						<contact:city>'.$billing_town.'</contact:city>
-						<contact:sp>'.$billing_state.'</contact:sp>
-						<contact:pc>'.$billing_zipcode.'</contact:pc>
-						<contact:cc>'.$billing_countrycode.'</contact:cc>
-					</contact:addr>
-				</contact:postalInfo>
-				<contact:voice>'.$billing_phone.'</contact:voice>
-				
-				<contact:email>'.$billing_email.'</contact:email>
-				<contact:authInfo>
-					<contact:pw>Afri-'.rand().rand().'</contact:pw>
-				</contact:authInfo>
-			</contact:create>
-		</create>
-		<clTRID>'.mt_rand().mt_rand().'</clTRID>
-	</command>
-</epp>
-');
-
-	# Parse XML result
-	$doc = new DOMDocument();
-	$doc->loadXML($request);
-	logModuleCall('COCCAepp', 'SaveContactDetails', $xml, $request);
-
-	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
-	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-	if(!eppSuccess($coderes)) {
-		$values["error"] = "SaveContactDetails/contact-update(Billing contact): Code ($coderes) $msg";
-		return $values;
-	}
-
-
-	# Save Technical contact details
-	//Create Domain Technical Contacts
-	$tecHandle = generateHandle();
-	
-$request = $client->request($xml ='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-   <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
-     <command>
-       <create>
-         <contact:create
-          xmlns:contact="urn:ietf:params:xml:ns:contact-1.0">
-				<contact:id>'.$tecHandle.'</contact:id>
-				<contact:postalInfo type="int">
-					<contact:name>'.$tech_name.'</contact:name>
-					<contact:org>'.$tech_org.'</contact:org>
-					<contact:addr>
-						<contact:street>'.$tech_address1.'</contact:street>
-						<contact:street>'.$tech_address2.'</contact:street>
-						<contact:city>'.$tech_town.'</contact:city>
-						<contact:sp>'.$tech_state.'</contact:sp>
-						<contact:pc>'.$tech_zipcode.'</contact:pc>
-						<contact:cc>'.$tech_countrycode.'</contact:cc>
-					</contact:addr>
-				</contact:postalInfo>
-				<contact:voice>'.$tech_phone.'</contact:voice>
-				
-				<contact:email>'.$tech_email.'</contact:email>
-				<contact:authInfo>
-					<contact:pw>Afri-'.rand().rand().'</contact:pw>
-				</contact:authInfo>
-			</contact:create>
-		</create>
-		<clTRID>'.mt_rand().mt_rand().'</clTRID>
-	</command>
-</epp>
-');
-
-	# Parse XML result
-	$doc= new DOMDocument();
-	$doc->loadXML($request);
-	logModuleCall('COCCAepp', 'SaveContactDetails', $xml, $request);
-
-	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
-	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-	if(!eppSuccess($coderes)) {
-		$values["error"] = "SaveContactDetails/contact-update(Technical Contact): Code ($coderes) $msg";
-		return $values;
-	}
-	# change the domain contacts
-	
-	$request = $client->request($xml='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+        $request = $client->request($xml='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
   <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
     <command>
       <update>
@@ -1363,24 +1190,22 @@ $request = $client->request($xml ='<?xml version="1.0" encoding="UTF-8" standalo
        </update>
        <clTRID>'.mt_rand().mt_rand().'</clTRID>
      </command>
-   </epp>
+   </epp>');
 
-');
-$doc= new DOMDocument();
-	$doc->loadXML($request);
-	logModuleCall('COCCAepp', 'SaveContactDetails', $xml, $request);
+        $doc= new DOMDocument();
+        $doc->loadXML($request);
+        logModuleCall('COCCAepp', 'SaveContactDetails', $xml, $request);
 
-	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
-	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-	if(!eppSuccess($coderes)) {
-		$values["error"] = "Domain contact update error: Code ($coderes) $msg";
-		return $values;
-	}
+        $coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
+        $msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
+        if(!eppSuccess($coderes)) {
+            $values["error"] = "Domain contact update error: Code ($coderes) $msg";
+            return $values;
+        }
 
-	$values["status"] = $msg;
+        $values["status"] = $msg;
 
-	
-	} catch (Exception $e) {
+    } catch (Exception $e) {
 		$values["error"] = 'SaveContactDetails/EPP: '.$e->getMessage();
 		return $values;
 	}
@@ -1388,7 +1213,52 @@ $doc= new DOMDocument();
 	return $values;
 }
 
+function createContact($client, $data, $type = "") {
+    //Create Billing Contacts
+    $handle = generateHandle();
 
+    $result = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+  <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
+    <command>
+      <create>
+        <contact:create xmlns:contact="urn:ietf:params:xml:ns:contact-1.0">
+          <contact:id>'.$handle.'</contact:id>
+          <contact:postalInfo type="int">
+            <contact:name>'.$data["Contact Name"].' </contact:name>
+            <contact:org>'.$data["Organisation"].'</contact:org>
+            <contact:addr>
+              <contact:street>'.$data["Address line 1"].'</contact:street>
+              <contact:street>'.$data["Address line 2"].'</contact:street>
+              <contact:city>'.$data["TownCity"].'</contact:city>
+              <contact:sp>'.$data["State"].'</contact:sp>
+              <contact:pc>'.$data["Zip code"].'</contact:pc>
+              <contact:cc>'.$data["Country Code"].'</contact:cc>
+            </contact:addr>
+          </contact:postalInfo>
+          <contact:voice>'.$data["Phone"].'</contact:voice>
+          <contact:email>'.$data["Email"].'</contact:email>
+          <contact:authInfo>
+            <contact:pw>CoCCA-'.rand().rand().'</contact:pw>
+          </contact:authInfo>
+        </contact:create>
+      </create>
+      <clTRID>'.mt_rand().mt_rand().'</clTRID>
+	</command>
+  </epp>');
+
+    # Parse XML result
+    $doc = new DOMDocument();
+    $doc->loadXML($result);
+    logModuleCall('COCCAepp', 'SaveContactDetails', $xml, $result);
+
+    $coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
+    $msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
+    if(!eppSuccess($coderes)) {
+        throw new Exception("contact-create($handle) $type: Code ($coderes) $msg");
+    }
+
+    return $handle;
+}
 
 # NOT IMPLEMENTED
 function COCCAepp_GetEPPCode($params) {
@@ -2026,9 +1896,10 @@ function COCCAepp_RejectTransfer($params) {
 }
 
 function generateHandle() {
-    $stamp = date("Ymdhis"); 
-    $handle = "$stamp"; 
-    sleep(1);
+    $stamp = time();
+    $shuffled = str_shuffle("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    $randStr = substr($shuffled, mt_rand(0, 45), 5);
+    $handle = "$stamp$randStr";
     return $handle;
 }
 

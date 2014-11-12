@@ -101,26 +101,26 @@ function COCCAepp_SaveNameservers($params) {
 	$tld = $params["tld"];
 	$domain = "$sld.$tld";
 
-# Generate array of new nameservers
-     $nameservers=array();
+    # Generate array of new nameservers
+    $nameservers=array();
     if (!empty($params["ns1"]))
-    array_push($nameservers,$params["ns1"]);
+        array_push($nameservers,$params["ns1"]);
     if (!empty($params["ns2"]))
-    array_push($nameservers,$params["ns2"]);
+        array_push($nameservers,$params["ns2"]);
     if(!empty($params["ns3"]))
-    array_push($nameservers,$params["ns3"]);
+        array_push($nameservers,$params["ns3"]);
     if(!empty($params["ns4"])) 
-    array_push($nameservers,$params["ns4"]);
+        array_push($nameservers,$params["ns4"]);
     if(!empty($params["ns5"])) 
-    array_push($nameservers,$params["ns5"]);
+        array_push($nameservers,$params["ns5"]);
 
 	# Get client instance
 	try {
 		$client = _COCCAepp_Client();
 
 		for($i=0; $i < count($nameservers); $i++) {
-# Get list of nameservers for domain
-	$result = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+            # Get list of nameservers for domain
+        	$result = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
      <command>
        <info>
@@ -132,18 +132,18 @@ function COCCAepp_SaveNameservers($params) {
        <clTRID>'.mt_rand().mt_rand().'</clTRID>
      </command>
    </epp>');
-	# Parse XML result
-	$doc = new DOMDocument();
-	$doc->preserveWhiteSpace = false;
-	$doc->loadXML($result);
-	logModuleCall('COCCAepp', 'GetNameservers', $xml, $result);
+            # Parse XML result
+            $doc = new DOMDocument();
+            $doc->preserveWhiteSpace = false;
+            $doc->loadXML($result);
+            logModuleCall('COCCAepp', 'GetNameservers', $xml, $result);
 
-	# Pull off status
-	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
-	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-	# Check if the nameserver exists in the registry...if not, add it
-	if($coderes == '2303') {
-		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+            # Pull off status
+            $coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
+            $msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
+            # Check if the nameserver exists in the registry...if not, add it
+            if($coderes == '2303') {
+                $request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
      <command>
        <create>
@@ -157,63 +157,50 @@ function COCCAepp_SaveNameservers($params) {
    </epp>
 ');
 
+                # Parse XML result
+                $doc= new DOMDocument();
+                $doc->loadXML($request);
+                logModuleCall('COCCAepp', 'SaveNameservers', $xml, $request);
 
-
-	# Parse XML result
-	$doc= new DOMDocument();
-	$doc->loadXML($request);
-	logModuleCall('COCCAepp', 'SaveNameservers', $xml, $request);
-
-	# Pull off status
-	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
-	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-	# Check if result is ok
-	if(!eppSuccess($coderes)) {
-		$values["error"] = "Could not Create host($nameservers[$i]): Code ($coderes) $msg";
-		return $values;
-	}
-	}
-
-      
-       
-     } 
-     # Generate XML for nameservers to add
-	if ($nameserver1 = $params["ns1"]) { 
-		$add_hosts = '
-
+                # Pull off status
+                $coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
+                $msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
+                # Check if result is ok
+                if(!eppSuccess($coderes)) {
+                    $values["error"] = "Could not Create host($nameservers[$i]): Code ($coderes) $msg";
+                    return $values;
+                }
+            }
+        }
+        # Generate XML for nameservers to add
+        if ($nameserver1 = $params["ns1"]) {
+		    $add_hosts = '
 	<domain:hostObj>'.$nameserver1.'</domain:hostObj>
-
 ';
-	}
-	if ($nameserver2 = $params["ns2"]) { 
-		$add_hosts .= '
-
+        }
+        if ($nameserver2 = $params["ns2"]) {
+            $add_hosts .= '
 	<domain:hostObj>'.$nameserver2.'</domain:hostObj>
-
 ';
-	}
-	if ($nameserver3 = $params["ns3"]) { 
-		$add_hosts .= '
-
+        }
+        if ($nameserver3 = $params["ns3"]) {
+            $add_hosts .= '
 	<domain:hostObj>'.$nameserver3.'</domain:hostObj>
-
 ';
-	}
-	if ($nameserver4 = $params["ns4"]) { 
-		$add_hosts .= '
-
+        }
+        if ($nameserver4 = $params["ns4"]) {
+            $add_hosts .= '
 	<domain:hostObj>'.$nameserver4.'</domain:hostObj>
 ';
-	}
-	if ($nameserver5 = $params["ns5"]) { 
-		$add_hosts .= '
-
+        }
+        if ($nameserver5 = $params["ns5"]) {
+            $add_hosts .= '
 	<domain:hostObj>'.$nameserver5.'</domain:hostObj>
 ';
-	}
-	
-	# Grab list of current nameservers
-	$request = $client->request($xml='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+        }
+
+        # Grab list of current nameservers
+        $request = $client->request($xml='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
      <command>
        <info>
@@ -227,34 +214,31 @@ function COCCAepp_SaveNameservers($params) {
    </epp>
 ');
 
+        # Parse XML result
+        $doc= new DOMDocument();
+        $doc->loadXML($request);
+        # Pull off status
+        $coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
+        $msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
+        # Check if result is ok
+        if(!eppSuccess($coderes)) {
+            $values["error"] = "SaveNameservers/domain-info($sld.$tld): Code ($coderes) $msg";
+            return $values;
+        }
 
-	# Parse XML result
-	$doc= new DOMDocument();
-	$doc->loadXML($request);
-	# Pull off status
-	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
-	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-	# Check if result is ok
-	if(!eppSuccess($coderes)) {
-		$values["error"] = "SaveNameservers/domain-info($sld.$tld): Code ($coderes) $msg";
-		return $values;
-	}
+        $values["status"] = $msg;
 
-	$values["status"] = $msg;
-
-	# Generate list of nameservers to remove
-	$hostlist = $doc->getElementsByTagName('hostObj');
-	foreach ($hostlist as $host) {
-		$rem_hosts .= '
-
+        # Generate list of nameservers to remove
+        $hostlist = $doc->getElementsByTagName('hostObj');
+        $rem_hosts = '';
+        foreach ($hostlist as $host) {
+            $rem_hosts .= '
 	<domain:hostObj>'.$host->nodeValue.'</domain:hostObj>
-
 ';
-	}
+    	}
 
-
-# Build request
-	$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+        # Build request
+	    $request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
      <command>
        <update>
@@ -274,24 +258,22 @@ function COCCAepp_SaveNameservers($params) {
 </epp>
 ');
 
+        # Parse XML result
+        $doc= new DOMDocument();
+        $doc->loadXML($request);
+        logModuleCall('COCCAepp', 'SaveNameservers', $xml, $request);
 
-	# Parse XML result
-	$doc= new DOMDocument();
-	$doc->loadXML($request);
-	logModuleCall('COCCAepp', 'SaveNameservers', $xml, $request);
-        
-	# Pull off status
-	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
-	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-	# Check if result is ok
-	if(!eppSuccess($coderes)) {
-		$values["error"] = "SaveNameservers/domain-update($sld.$tld): Code ($coderes) $msg";
-		return $values;
-	}
+        # Pull off status
+        $coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
+        $msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
+        # Check if result is ok
+        if(!eppSuccess($coderes)) {
+            $values["error"] = "SaveNameservers/domain-update($sld.$tld): Code ($coderes) $msg";
+            return $values;
+        }
 
-	$values['status'] = "Domain update Successful";
+        $values['status'] = "Domain update Successful";
 
-	
 	} catch (Exception $e) {
 		$values["error"] = 'SaveNameservers/EPP: '.$e->getMessage();
 		return $values;

@@ -970,13 +970,13 @@ function COCCAepp_GetContactDetails($params) {
                 $values["$type"] = $contactIDs[$value];
             }else{
                 $values["$type"]["Contact Name"] = "";
-                $values["$type"]["Organisation"] = "";
-                $values["$type"]["Address line 1"] = "";
-                $values["$type"]["Address line 2"] = "";
-                $values["$type"]["TownCity"] = "";
+                $values["$type"]["Company Name"] = "";
+                $values["$type"]["Address 1"] = "";
+                $values["$type"]["Address 2"] = "";
+                $values["$type"]["City"] = "";
                 $values["$type"]["State"] = "";
-                $values["$type"]["Zip code"] = "";
-                $values["$type"]["Country Code"] = "";
+                $values["$type"]["ZIP code"] = "";
+                $values["$type"]["Country"] = "";
                 $values["$type"]["Phone"] = "";
                 $values["$type"]["Email"] = "";
             }
@@ -1018,13 +1018,13 @@ function getContactDetail($client, $contactID) {
     }
 
     $contact["Contact Name"] = $doc->getElementsByTagName('name')->item(0)->nodeValue;
-    $contact["Organisation"] = $doc->getElementsByTagName('org')->item(0)->nodeValue;
-    $contact["Address line 1"] = $doc->getElementsByTagName('street')->item(0)->nodeValue;
-    $contact["Address line 2"] = $doc->getElementsByTagName('street')->item(1)->nodeValue;
-    $contact["TownCity"] = $doc->getElementsByTagName('city')->item(0)->nodeValue;
+    $contact["Company Name"] = $doc->getElementsByTagName('org')->item(0)->nodeValue;
+    $contact["Address 1"] = $doc->getElementsByTagName('street')->item(0)->nodeValue;
+    $contact["Address 2"] = $doc->getElementsByTagName('street')->item(1)->nodeValue;
+    $contact["City"] = $doc->getElementsByTagName('city')->item(0)->nodeValue;
     $contact["State"] = $doc->getElementsByTagName('sp')->item(0)->nodeValue;
-    $contact["Zip code"] = $doc->getElementsByTagName('pc')->item(0)->nodeValue;
-    $contact["Country Code"] = $doc->getElementsByTagName('cc')->item(0)->nodeValue;
+    $contact["ZIP code"] = $doc->getElementsByTagName('pc')->item(0)->nodeValue;
+    $contact["Country"] = $doc->getElementsByTagName('cc')->item(0)->nodeValue;
     $contact["Phone"] = $doc->getElementsByTagName('voice')->item(0)->nodeValue;
     $contact["Email"] = $doc->getElementsByTagName('email')->item(0)->nodeValue;
 
@@ -1036,174 +1036,133 @@ function COCCAepp_SaveContactDetails($params) {
 	# Grab variables
 	$tld = $params["tld"];
 	$sld = $params["sld"];
-
-	# Registrant details
-    $registrant_details = $params["contactdetails"]["Registrant"];
-	$registrant_name = $params["contactdetails"]["Registrant"]["Contact Name"];
-	$registrant_org = $params["contactdetails"]["Registrant"]["Organisation"];
-	$registrant_address1 =  $params["contactdetails"]["Registrant"]["Address line 1"];
-	$registrant_address2 = $params["contactdetails"]["Registrant"]["Address line 2"];
-	$registrant_town = $params["contactdetails"]["Registrant"]["TownCity"];
-	$registrant_state = $params["contactdetails"]["Registrant"]["State"];
-	$registrant_zipcode = $params["contactdetails"]["Registrant"]["Zip code"];
-	$registrant_countrycode = $params["contactdetails"]["Registrant"]["Country Code"];
-	$registrant_phone = $params["contactdetails"]["Registrant"]["Phone"];
-	$registrant_email = $params["contactdetails"]["Registrant"]["Email"];
-
-    $billing_details = $params["contactdetails"]["Billing"];
-    $admin_details = $params["contactdetails"]["Admin"];
-    $tech_details = $params["contactdetails"]["Tech"];
+    $details = $params["contactdetails"];
 
 	# Get client instance
 	try {
-		$client = _COCCAepp_Client();
+        $client = _COCCAepp_Client();
 
-		# Grab domain info
-		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+        # Grab domain info
+        $request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <epp:epp xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:epp="urn:ietf:params:xml:ns:epp-1.0"
 		xmlns:domain="urn:ietf:params:xml:ns:domain-1.0" xsi:schemaLocation="urn:ietf:params:xml:ns:epp-1.0 epp-1.0.xsd">
 	<epp:command>
 		<epp:info>
 			<domain:info xsi:schemaLocation="urn:ietf:params:xml:ns:domain-1.0 domain-1.0.xsd">
-				<domain:name hosts="all">'.$sld.'.'.$tld.'</domain:name>
+				<domain:name hosts="all">' . $sld . '.' . $tld . '</domain:name>
 			</domain:info>
 		</epp:info>
 	</epp:command>
 </epp:epp>');
 
-	    # Parse XML	result
-        $doc= new DOMDocument();
+        # Parse XML	result
+        $doc = new DOMDocument();
         $doc->loadXML($request);
         $coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
         $msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-        if(!eppSuccess($coderes)) {
-            $values["error"] = "SaveContactDetails/domain-info($sld.$tld): Code (".$coderes.") ".$msg;
+        if (!eppSuccess($coderes)) {
+            $values["error"] = "SaveContactDetails/domain-info($sld.$tld): Code (" . $coderes . ") " . $msg;
             return $values;
         }
 
         $values["status"] = $msg;
         # Grab Registrant contact Handles
-        $registrant = $doc->getElementsByTagName('registrant')->item(0)->nodeValue;
-        if (empty($registrant)) {
+        $registrantHandle = $doc->getElementsByTagName('registrant')->item(0)->nodeValue;
+        if (empty($registrantHandle)) {
             $values["error"] = "GetContactDetails/domain-info($sld.$tld): Registrant info not available";
             return $values;
         }
-        $domaininfo=array();
-        for ($i=0; $i<=2; $i++) {
-            $x=$doc->getElementsByTagName('contact')->item($i);
-            if(!empty($x)){
-                $domaininfo[$doc->getElementsByTagName('contact')->item($i)->getAttribute('type')]=$doc->getElementsByTagName('contact')->item($i)->nodeValue;
-            }
-            else{
+        $domaininfo = array();
+        for ($i = 0; $i <= 2; $i++) {
+            $x = $doc->getElementsByTagName('contact')->item($i);
+            if (!empty($x)) {
+                $domaininfo[$doc->getElementsByTagName('contact')->item($i)->getAttribute('type')] = $doc->getElementsByTagName('contact')->item($i)->nodeValue;
+            } else {
                 break;
             }
         }
-/*
-        foreach($contactIDs as $id => $k) {
-            $contactIDs[$id] = getContactDetail($client, $id);
-        }
-*/
-        $Contacts["admin"]=$domaininfo["admin"];
-        $Contacts["tech"]=$domaininfo["tech"];
-      	$Contacts["billing"]=$domaininfo["billing"];
 
-  	 	// Build contacts to remove
-        if(isset($Contacts["admin"])){
-            $rem_conts .= '
-        <domain:contact type="admin">'.$Contacts["admin"].'</domain:contact>';
-    	}
-        if(isset($Contacts["tech"])){
-            $rem_conts .= '
-        <domain:contact type="tech">'.$Contacts["tech"].'</domain:contact>';
-        }
-        if(isset($Contacts["billing"])){
-            $rem_conts .= '
-        <domain:contact type="billing">'.$Contacts["billing"].'</domain:contact>';
+        $Contacts["Admin"] = $domaininfo["admin"];
+        $Contacts["Tech"] = $domaininfo["tech"];
+        $Contacts["Billing"] = $domaininfo["billing"];
+
+        $cIDs[$registrantHandle] = 'Registrant';
+        foreach($Contacts as $type => $handle) {
+            if(isset($handle))
+                if(!array_key_exists($handle, $cIDs)) {
+                    $cIDs[$handle] = $type;
+                }
+                else {
+                    $removeContact[$type] = $handle;
+                    $Contacts[$type] = null;
+                }
         }
 
-    	# Save Registrant contact details
-    	$request = $client->request($xml ='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-   <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
-     <command>
-       <update>
-         <contact:update
-          xmlns:contact="urn:ietf:params:xml:ns:contact-1.0">
-				<contact:id>'.$registrant.'</contact:id>
-				<contact:chg>
-					<contact:postalInfo type="int">
-						<contact:name>'.$registrant_name.'</contact:name>
-						<contact:org>'.$registrant_org.'</contact:org>
-						<contact:addr>
-							<contact:street>'.$registrant_address1.'</contact:street>
-							<contact:street>'.$registrant_address2.'</contact:street>
-							<contact:city>'.$registrant_town.'</contact:city>
-							<contact:sp>'.$registrant_state.'</contact:sp>
-							<contact:pc>'.$registrant_zipcode.'</contact:pc>
-							<contact:cc>'.$registrant_countrycode.'</contact:cc>
-						</contact:addr>
-						</contact:postalInfo>
-						<contact:voice>'.$registrant_phone.'</contact:voice>
-						
-						<contact:email>'.$registrant_email.'</contact:email>
-				</contact:chg>
-			</contact:update>
-		</update>
-		<clTRID>'.mt_rand().mt_rand().'</clTRID>
-	</command>
-</epp>');
-
-        # Parse XML result
-        $doc= new DOMDocument();
-        $doc->loadXML($request);
-        logModuleCall('COCCAepp', 'SaveContactDetails', $xml, $request);
-
-        $coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
-        $msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-        if(!eppSuccess($coderes)) {
-            $values["error"] = "SaveContactDetails/contact-update(registrant): Code ($coderes) $msg";
-            return $values;
+        foreach ($Contacts as $type => $handle) {
+            if (isset($handle)) {
+                if (!array_empty($details[$type]))
+                    changeContact($client, $details[$type], $handle, $type);
+                else
+                    $removeContact[$type] = $handle;
+            } else {
+                if (!array_empty($details[$type]))
+                    $addContact[$type] = createContact($client, $details[$type], $type);
+            }
         }
-	
-        # Create new contact details
-        $admHandle = createContact($client, $admin_details, 'Admin');
-        $bilHandle = createContact($client, $billing_details, 'Billing');
-        $tecHandle = createContact($client, $tech_details, 'Tech');
+
+        $xmlAddContact = '';
+        if(isset($addContact)) {
+            $xmlAddContact = "<domain:add>\n";
+            foreach ($addContact as $type => $handle) {
+                $xmlAddContact .= '<domain:contact type="'.strtolower($type).'">'.$handle.'</domain:contact>'."\n";
+            }
+            $xmlAddContact .= "</domain:add>\n";
+        }
+
+        $xmlRemContact = '';
+        if(isset($removeContact)) {
+            $xmlRemContact = "<domain:rem>\n";
+            foreach ($removeContact as $type => $handle) {
+                $xmlRemContact .= '<domain:contact type="'.strtolower($type).'">'.$handle.'</domain:contact>'."\n";
+            }
+            $xmlRemContact .= "</domain:rem>\n";
+        }
+
+        # Save Registrant contact details
+        changeContact($client, $details['Registrant'], $registrantHandle, "Registrant");
 
         # change the domain contacts
-
-        $request = $client->request($xml='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+        if(!empty($xmlAddContact) || !empty($xmlRemContact)) {
+            $request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
   <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
     <command>
       <update>
-        <domain:update
-         xmlns:domain="urn:ietf:params:xml:ns:domain-1.0">
-           <domain:name>'.$sld.'.'.$tld.'</domain:name>
-           <domain:add>
-             <domain:contact type="tech">'.$tecHandle.'</domain:contact>
-             <domain:contact type="admin">'.$admHandle.'</domain:contact>
-             <domain:contact type="billing">'.$bilHandle.'</domain:contact>
-           </domain:add>
-           <domain:rem>
-             '.$rem_conts.'
-           </domain:rem>
-            </domain:update>
+        <domain:update xmlns:domain="urn:ietf:params:xml:ns:domain-1.0">
+         <domain:name>' . $sld . '.' . $tld . '</domain:name>' .
+                $xmlAddContact .
+                $xmlRemContact . '
+        </domain:update>
        </update>
-       <clTRID>'.mt_rand().mt_rand().'</clTRID>
+       <clTRID>' . mt_rand() . mt_rand() . '</clTRID>
      </command>
    </epp>');
 
-        $doc= new DOMDocument();
-        $doc->loadXML($request);
-        logModuleCall('COCCAepp', 'SaveContactDetails', $xml, $request);
+            $doc = new DOMDocument();
+            $doc->loadXML($request);
+            logModuleCall('COCCAepp', 'SaveContactDetails', $xml, $request);
 
-        $coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
-        $msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-        if(!eppSuccess($coderes)) {
-            $values["error"] = "Domain contact update error: Code ($coderes) $msg";
-            return $values;
+            $coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
+            $msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
+            if (!eppSuccess($coderes)) {
+                $values["error"] = "Domain contact update error: Code ($coderes) $msg";
+                return $values;
+            }
+
+            $values["status"] = $msg;
         }
-
-        $values["status"] = $msg;
+        else {
+            $values["status"] = 'OK';
+        }
 
     } catch (Exception $e) {
 		$values["error"] = 'SaveContactDetails/EPP: '.$e->getMessage();
@@ -1225,14 +1184,14 @@ function createContact($client, $data, $type = "") {
           <contact:id>'.$handle.'</contact:id>
           <contact:postalInfo type="int">
             <contact:name>'.$data["Contact Name"].' </contact:name>
-            <contact:org>'.$data["Organisation"].'</contact:org>
+            <contact:org>'.$data["Company Name"].'</contact:org>
             <contact:addr>
-              <contact:street>'.$data["Address line 1"].'</contact:street>
-              <contact:street>'.$data["Address line 2"].'</contact:street>
-              <contact:city>'.$data["TownCity"].'</contact:city>
+              <contact:street>'.$data["Address 1"].'</contact:street>
+              <contact:street>'.$data["Address 2"].'</contact:street>
+              <contact:city>'.$data["City"].'</contact:city>
               <contact:sp>'.$data["State"].'</contact:sp>
-              <contact:pc>'.$data["Zip code"].'</contact:pc>
-              <contact:cc>'.$data["Country Code"].'</contact:cc>
+              <contact:pc>'.$data["ZIP code"].'</contact:pc>
+              <contact:cc>'.$data["Country"].'</contact:cc>
             </contact:addr>
           </contact:postalInfo>
           <contact:voice>'.$data["Phone"].'</contact:voice>
@@ -1242,6 +1201,49 @@ function createContact($client, $data, $type = "") {
           </contact:authInfo>
         </contact:create>
       </create>
+      <clTRID>'.mt_rand().mt_rand().'</clTRID>
+	</command>
+  </epp>');
+
+    # Parse XML result
+    $doc = new DOMDocument();
+    $doc->loadXML($result);
+    logModuleCall('COCCAepp', 'SaveContactDetails', $xml, $result);
+
+    $coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
+    $msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
+    if(!eppSuccess($coderes)) {
+        throw new Exception("contact-create($handle) $type: Code ($coderes) $msg");
+    }
+
+    return $handle;
+}
+
+function changeContact($client, $newdata, $handle, $type = "") {
+    $result = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+  <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
+    <command>
+      <update>
+        <contact:update xmlns:contact="urn:ietf:params:xml:ns:contact-1.0">
+          <contact:id>'.$handle.'</contact:id>
+          <contact:chg>
+            <contact:postalInfo type="int">
+              <contact:name>'.$newdata["Contact Name"].' </contact:name>
+              <contact:org>'.$newdata["Company Name"].'</contact:org>
+              <contact:addr>
+                <contact:street>'.$newdata["Address 1"].'</contact:street>
+                <contact:street>'.$newdata["Address 2"].'</contact:street>
+                <contact:city>'.$newdata["City"].'</contact:city>
+                <contact:sp>'.$newdata["State"].'</contact:sp>
+                <contact:pc>'.$newdata["ZIP code"].'</contact:pc>
+                <contact:cc>'.$newdata["Country"].'</contact:cc>
+              </contact:addr>
+            </contact:postalInfo>
+            <contact:voice>'.$newdata["Phone"].'</contact:voice>
+            <contact:email>'.$newdata["Email"].'</contact:email>
+          </contact:chg>
+        </contact:update>
+      </update>
       <clTRID>'.mt_rand().mt_rand().'</clTRID>
 	</command>
   </epp>');
@@ -1914,4 +1916,13 @@ function eppSuccess($code) {
         }
 	return false;
 }
+
+function array_empty($a) {
+    foreach($a as $e)
+        if(!empty($e))
+            return false;
+
+    return true;
+}
+
 

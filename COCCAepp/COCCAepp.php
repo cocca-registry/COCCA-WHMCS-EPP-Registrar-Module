@@ -35,7 +35,6 @@ function COCCAepp_GetNameservers($params) {
 	$sld = $params["sld"];
 	$tld = $params["tld"];
 	$domain = "$sld.$tld";
-	
 
 	# Get client instance
 	try {
@@ -71,23 +70,22 @@ function COCCAepp_GetNameservers($params) {
 		}
 
 		# Grab hostObj array
-	$ns = $doc->getElementsByTagName('hostObj');
-	# Extract nameservers & build return result
-	$i = 1;	$values = array();
-	foreach ($ns as $nn) {
-		$values["ns{$i}"] = $nn->nodeValue;
-		$i++;
-	}
+        $ns = $doc->getElementsByTagName('hostObj');
+        # Extract nameservers & build return result
+        $i = 1;	$values = array();
+        foreach ($ns as $nn) {
+            $values["ns{$i}"] = $nn->nodeValue;
+            $i++;
+        }
 
-	$values["status"] = $msg;
+        $values["status"] = $msg;
 
-	return $values;
+        return $values;
 
 	} catch (Exception $e) {
 		$values["error"] = 'GetNameservers/EPP: '.$e->getMessage();
 		return $values;
 	}
-
 
 	return $values;
 }
@@ -592,7 +590,7 @@ function COCCAepp_RegisterDomain($params) {
         } else if($coderes == '2302') {
             $values['contact'] = 'Contact Already exists';
         } else {
-            $values["error"] = "RegisterDomain/Reg-create($contactid): Code ($coderes) $msg";
+            $values["error"] = "RegisterDomain/Reg-create($regHandle): Code ($coderes) $msg";
             return $values;
         }
 
@@ -641,7 +639,7 @@ function COCCAepp_RegisterDomain($params) {
         } else if($coderes == '2302') {
             $values['contact'] = 'Contact Already exists';
         } else {
-            $values["error"] = "RegisterDomain/Admin Contact-create($contactid): Code ($coderes) $msg";
+            $values["error"] = "RegisterDomain/Admin Contact-create($admHandle): Code ($coderes) $msg";
             return $values;
         }
 
@@ -763,7 +761,6 @@ function COCCAepp_TransferDomain($params) {
 
 	return $values;
 }
-
 
 
 # Function to renew domain
@@ -1423,9 +1420,7 @@ function COCCAepp_DeleteNameserver($params) {
 
 # Function to return meaningful message from response code
 function _COCCAepp_message($code) {
-
 	return "Code $code";
-
 }
 
 # Function to create internal EPP request
@@ -1509,7 +1504,6 @@ function COCCAepp_TransferSync($params) {
 
 	# Other parameters used in your _getConfigArray() function would also be available for use in this function
 
-	# Grab domain info
 	try {
 		$client = _COCCAepp_Client();
 		# Grab domain info
@@ -1586,7 +1580,6 @@ function COCCAepp_Sync($params) {
 
 	# Other parameters used in your _getConfigArray() function would also be available for use in this function
 
-	# Grab domain info
 	try {
 		$client = _COCCAepp_Client();
 		# Grab domain info
@@ -1678,11 +1671,10 @@ function COCCAepp_RequestDelete($params) {
 	$sld = $params['sld'];
 	$tld = $params['tld'];
 	
-	# Grab domain info
 	try {
 		$client = _COCCAepp_Client();
 
-		# Grab domain info
+		# Request Delete
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
      <command>
@@ -1729,7 +1721,7 @@ function COCCAepp_ApproveTransfer($params) {
 	try {
 		$client = _COCCAepp_Client();
 
-		# 
+		# Approve Transfer Request
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
 	<command>
@@ -1772,11 +1764,10 @@ function COCCAepp_CancelTransferRequest($params) {
 	$sld = $params['sld'];
 	$tld = $params['tld'];
 	
-	# Grab domain info
 	try {
 		$client = _COCCAepp_Client();
 
-		# Grab domain info
+		# Cancel Transfer Request
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp1.0">
 	<command>
@@ -1819,11 +1810,10 @@ function COCCAepp_RejectTransfer($params) {
 	$sld = $params['sld'];
 	$tld = $params['tld'];
 	
-	# Grab domain info
 	try {
 		$client = _COCCAepp_Client();
 
-		# Grab domain info
+		# Reject Transfer
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp1.0">
 	<command>

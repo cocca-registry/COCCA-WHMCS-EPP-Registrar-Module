@@ -659,7 +659,7 @@ function COCCAepp_RegisterDomain($params) {
 				<domain:contact type="tech">'.$admHandle.'</domain:contact>
 				<domain:contact type="billing">'.$admHandle.'</domain:contact>
 				<domain:authInfo>
-					<domain:pw>COCCA'.rand().rand().'</domain:pw>
+					<domain:pw>CoCcA'.rand().rand().'</domain:pw>
 				</domain:authInfo>
 			</domain:create>
 		</create>

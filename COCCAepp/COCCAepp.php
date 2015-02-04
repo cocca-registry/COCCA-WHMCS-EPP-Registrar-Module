@@ -420,6 +420,7 @@ function COCCAepp_RegisterDomain($params) {
 	# Get registrant details
 	$RegistrantFirstName = $params["firstname"];
 	$RegistrantLastName = $params["lastname"];
+	$RegistrantOrganization = $params["Organisation"];
 	$RegistrantAddress1 = $params["address1"];
 	$RegistrantAddress2 = $params["address2"];
 	$RegistrantCity = $params["city"];
@@ -435,6 +436,7 @@ function COCCAepp_RegisterDomain($params) {
 	$AdminLastName = $params["adminlastname"];
 	$AdminAddress1 = $params["adminaddress1"];
 	$AdminAddress2 = $params["adminaddress2"];
+	$Adminorganisation = $params["adminorganisation"];
 	$AdminCity = $params["admincity"];
 	$AdminStateProvince = $params["adminstate"];
 	$AdminPostalCode = $params["adminpostcode"];
@@ -593,7 +595,7 @@ function COCCAepp_RegisterDomain($params) {
 				<contact:id>'.$regHandle.'</contact:id>
 				<contact:postalInfo type="int">
 					<contact:name>'.$RegistrantFirstName.' '.$RegistrantLastName.'</contact:name>
-					<contact:org>Example Inc.</contact:org>
+					<contact:org>'.$RegistrantOrganization.'</contact:org>
 					<contact:addr>
 						<contact:street>'.$RegistrantAddress1.'</contact:street>
 						<contact:street>'.$RegistrantAddress2.'</contact:street>
@@ -643,6 +645,7 @@ function COCCAepp_RegisterDomain($params) {
 				<contact:id>'.$admHandle.'</contact:id>
 				<contact:postalInfo type="int">
 					<contact:name>'.$AdminFirstName.' '.$AdminLastName.'</contact:name>
+					<contact:org>'.$Adminorganisation.'</contact:org>
 					<contact:addr>
 						<contact:street>'.$AdminAddress1.'</contact:street>
 						<contact:street>'.$AdminAddress2.'</contact:street>

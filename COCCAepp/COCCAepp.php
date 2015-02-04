@@ -6,6 +6,7 @@ function COCCAepp_getConfigArray() {
 		"Password" => array( "Type" => "password", "Size" => "20", "Description" => "Enter your password here" ),
 		"Server" => array( "Type" => "text", "Size" => "20", "Description" => "Enter EPP Server Address" ),
 		"Port" => array( "Type" => "text", "Size" => "20", "Description" => "Enter EPP Server Port" ),
+		"IDN" => array( "Type" => "yesno" , "Description" => "Select to enable IDN Support" ),
 		"SSL" => array( "Type" => "yesno" ),
 		"Certificate" => array( "Type" => "text", "Description" => "Path of certificate .pem" )
 	);
@@ -442,9 +443,45 @@ function COCCAepp_RegisterDomain($params) {
 	$AdminPhone = $params["adminphonenumber"];
 	#Generate Handle
 	$admHandle = generateHandle();
-	
-	
-	
+        $domain = $sld.$tld;
+        //Create instance
+        if (!isset($client)) {
+			$client = _COCCAepp_Client();
+		}
+//Is IDN enabled?	
+   if (!empty($params['IDN']) && $params['IDN'] == 'on') {
+      require_once(dirname(__FILE__) . "./Punycode.php");
+      $Punycode = new Punycode();
+      $domain = $Punycode->encode($domain);
+
+	} 
+    
+//Does this domain exist in the registry?
+ $request = $client->request($xml='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+   <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
+     <command>
+       <info>
+         <domain:info
+          xmlns:domain="urn:ietf:params:xml:ns:domain-1.0">
+           <domain:name hosts="all">'.$domain.'</domain:name>
+         </domain:info>
+       </info>
+       <clTRID>'.mt_rand().mt_rand().'</clTRID>
+     </command>
+   </epp>
+');
+
+        # Parse XML result
+        $doc= new DOMDocument();
+        $doc->loadXML($request);
+        # Pull off status
+        $coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
+        $msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
+  $values["status"] = $msg;
+  //If the domain is not yet registered, create it 
+   if($coderes == '2303') {     
+        
+
     # Generate array of new nameservers
     $nameservers=array();
     if(!empty($params["ns1"]))
@@ -460,7 +497,7 @@ function COCCAepp_RegisterDomain($params) {
 
 # Get client instance
 	try {
-		$client = _COCCAepp_Client();
+		
         for($i=0; $i < count($nameservers); $i++) {
             # Get list of nameservers for domain
         	$result = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -651,7 +688,7 @@ function COCCAepp_RegisterDomain($params) {
        <create>
          <domain:create
           xmlns:domain="urn:ietf:params:xml:ns:domain-1.0">
-				<domain:name>'.$sld.'.'.$tld.'</domain:name>
+				<domain:name>'.$domain.'</domain:name>
 <domain:period unit="y">'.$regperiod.'</domain:period>
 				<domain:ns>'.$add_hosts.'</domain:ns>
 				<domain:registrant>'.$regHandle.'</domain:registrant>
@@ -687,7 +724,7 @@ function COCCAepp_RegisterDomain($params) {
 		$values["error"] = 'RegisterDomain/EPP: '.$e->getMessage();
 		return $values;
 	}
-
+}
 	return $values;
 }
 

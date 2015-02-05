@@ -452,7 +452,7 @@ function COCCAepp_RegisterDomain($params) {
 		}
 //Is IDN enabled?	
    if (!empty($params['IDN']) && $params['IDN'] == 'on') {
-      require_once(dirname(__FILE__) . "./Punycode.php");
+      require_once(dirname(__FILE__) . "/Punycode.php");
       $Punycode = new Punycode();
       $domain = $Punycode->encode($domain);
 

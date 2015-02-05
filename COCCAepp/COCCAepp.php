@@ -445,7 +445,7 @@ function COCCAepp_RegisterDomain($params) {
 	$AdminPhone = $params["adminphonenumber"];
 	#Generate Handle
 	$admHandle = generateHandle();
-        $domain = $sld.$tld;
+        $domain = $sld.'.'.$tld;
         //Create instance
         if (!isset($client)) {
 			$client = _COCCAepp_Client();

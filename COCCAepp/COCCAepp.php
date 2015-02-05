@@ -454,11 +454,11 @@ function COCCAepp_RegisterDomain($params) {
    if (!empty($params['IDN']) && $params['IDN'] == 'on') {
       require dirname(__FILE__) . '/Punycode.php';
       // Import Punycode
-     use True\Punycode;
+     
 
 // Use UTF-8 as the encoding
      mb_internal_encoding('utf-8');
-      $Punycode = new Punycode();
+      $Punycode = new True\Punycode();
       $domain = $Punycode->encode($domain);
 
 	} 

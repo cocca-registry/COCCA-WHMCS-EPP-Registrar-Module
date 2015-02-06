@@ -17,6 +17,15 @@ $params = getregistrarconfigoptions('COCCAepp');
 
 //Get the variable sent from WHMCS
 $domain=$_GET["domain"];
+//Is IDN enabled?	
+   if (!empty($params['IDN']) && $params['IDN'] == 'on') {
+      require 'Punycode.php';
+      // Import Punycode
+     
+// Use UTF-8 as the encoding
+     mb_internal_encoding('utf-8');
+      $Punycode = new True\Punycode();
+      $domain = $Punycode->encode($domain);
 # Get client instance
 	try {
 		$client = _COCCAepp_Client();

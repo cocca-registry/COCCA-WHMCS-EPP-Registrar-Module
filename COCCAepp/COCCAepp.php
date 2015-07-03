@@ -38,7 +38,7 @@ function COCCAepp_GetNameservers($params) {
 
 	# Get client instance
 	try {
-		$client = _COCCAepp_Client($domain);
+		$client = _COCCAepp_Client();
 
 		# Get list of nameservers for domain
 		$result = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -114,7 +114,7 @@ function COCCAepp_SaveNameservers($params) {
 
 	# Get client instance
 	try {
-		$client = _COCCAepp_Client($domain);
+		$client = _COCCAepp_Client();
 
 		for($i=0; $i < count($nameservers); $i++) {
             # Get list of nameservers for domain
@@ -288,7 +288,7 @@ function COCCAepp_GetRegistrarLock($params) {
 // what is the current domain status?
 # Grab list of current nameservers
  try {
- $client = _COCCAepp_Client($domain);
+ $client = _COCCAepp_Client();
         $request = $client->request($xml='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
      <command>
@@ -352,7 +352,7 @@ $sld = $params["sld"];
 	//$domain = "$sld.$tld";
 try {
 		if (!isset($client)) {
-			$client = _COCCAepp_Client($domain);
+			$client = _COCCAepp_Client();
 		}
 
 		# Lock Domain
@@ -422,7 +422,7 @@ function COCCAepp_UnlockDomain($params) {
 	$domain = "$sld.$tld";
 try {
 		if (!isset($client)) {
-			$client = _COCCAepp_Client($domain);
+			$client = _COCCAepp_Client();
 		}
 
 		# Lift Update Prohibited Lock
@@ -533,7 +533,7 @@ $domain = "$sld.$tld";
 
 # Get client instance
 	try {
-		$client = _COCCAepp_Client($domain);
+		$client = _COCCAepp_Client();
         for($i=0; $i < count($nameservers); $i++) {
             # Get list of nameservers for domain
         	$result = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -793,7 +793,7 @@ $domain = "$sld.$tld";
 	
 	# Get client instance
 	try {
-		$client = _COCCAepp_Client($domain);
+		$client = _COCCAepp_Client();
 
 		# Initiate transfer
 		$request = $client->request($xml ='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -845,7 +845,7 @@ function COCCAepp_RenewDomain($params) {
 $domain = "$sld.$tld";
 	# Get client instance
 	try {
-		$client = _COCCAepp_Client($domain);
+		$client = _COCCAepp_Client();
 
 		# Send renewal request
 		$request = $client->request($xml='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -934,7 +934,7 @@ $domain = "$sld.$tld";
 	# Get client instance
 	try {
 		if (!isset($client)) {
-			$client = _COCCAepp_Client($domain);
+			$client = _COCCAepp_Client();
 		}
 
 		# Grab domain info
@@ -1074,7 +1074,7 @@ function COCCAepp_SaveContactDetails($params) {
 $domain = "$sld.$tld";
 	# Get client instance
 	try {
-        $client = _COCCAepp_Client($domain);
+        $client = _COCCAepp_Client();
 
         # Grab domain info
         $request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -1328,7 +1328,7 @@ $domain = "$sld.$tld";
 
 	# Grab client instance
 	try {
-		$client = _COCCAepp_Client($domain);
+		$client = _COCCAepp_Client();
 
 		# Register nameserver
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -1388,7 +1388,7 @@ function COCCAepp_ModifyNameserver($params) {
 $domain = "$sld.$tld";	
 	# Grab client instance
 	try {
-		$client = _COCCAepp_Client($domain);
+		$client = _COCCAepp_Client();
 
 		# Modify nameserver
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -1448,7 +1448,7 @@ function COCCAepp_DeleteNameserver($params) {
 $domain = "$sld.$tld";
 	# Grab client instance
 	try {
-		$client = _COCCAepp_Client($domain);
+		$client = _COCCAepp_Client();
 
 		
 
@@ -1497,7 +1497,7 @@ function _COCCAepp_message($code) {
 }
 
 # Function to create internal EPP request
-function _COCCAepp_Client($domain) {
+function _COCCAepp_Client() {
 	# Setup include dir
 	$include_path = ROOTDIR . '/modules/registrars/COCCAepp';
 	set_include_path($include_path . PATH_SEPARATOR . get_include_path());
@@ -1508,39 +1508,15 @@ function _COCCAepp_Client($domain) {
 	# Grab module parameters
 	$params = getregistrarconfigoptions('COCCAepp');
 	# Check if module parameters are sane
-	//if (empty($params['Username']) || empty($params['Password'])) {
-	//	throw new Exception('System configuration error(1), please contact your provider');
-	//}
-	//Get the domain extension...for the credentials
-	$domain=split("\.",$domain);
-        if(count($domain)>2){
-            $domainname=$domain[0];
-            for($i=1;$i<count($domain);$i++){
-                if($i==1){
-                    $tldname=$domain[$i];
-                }else{
-                   // $tldname.=".".$domain[$i];
-                   $tldname=$domain[$i];
-                }
-            }
-        }else{
-            $domainname=$domain[0];
-            $tldname=$domain[1];
-        }
-        $tldname=".".$tldname;
+	if (empty($params['Username']) || empty($params['Password'])) {
+		throw new Exception('System configuration error(1), please contact your provider');
+	}
+
        // echo $tldname;
-       file_put_contents('/home/afrireg2/public_html/modules/registrars/COCCAepp/tld.txt', $tldname, FILE_APPEND);
+       
         //Get the EPP Configurations for the extension:
         
-        $results = select_query("mod_COCCARegtlds", "", array("tld" => $tldname));
-        $result = mysql_fetch_array($results);
-        file_put_contents('/home/afrireg2/public_html/modules/registrars/COCCAepp/query.txt', $result['hostname'], FILE_APPEND);
-        $host= $result['hostname'];
-        $user= $result['username'];
-        $pass=$result['password'];
-        $port=$result['port'];
-
-	# Create SSL context
+        # Create SSL context
 	$context = stream_context_create();
 	# Are we using ssl?
 	$use_ssl = true;
@@ -1567,8 +1543,8 @@ function _COCCAepp_Client($domain) {
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
      <command>
        <login>
-         <clID>'.$user.'</clID>
-         <pw>'.$pass.'</pw>
+         <clID>'.$params['Username'].'</clID>
+         <pw>'.$params['Password'].'</pw>
          <options>
            <version>1.0</version>
            <lang>en</lang>
@@ -1606,7 +1582,7 @@ $domain = "$sld.$tld";
 	# Other parameters used in your _getConfigArray() function would also be available for use in this function
 
 	try {
-		$client = _COCCAepp_Client($domain);
+		$client = _COCCAepp_Client();
 		# Grab domain info
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
@@ -1682,7 +1658,7 @@ $domain = "$sld.$tld";
 	# Other parameters used in your _getConfigArray() function would also be available for use in this function
 
 	try {
-		$client = _COCCAepp_Client($domain);
+		$client = _COCCAepp_Client();
 		# Grab domain info
 		$request = $client->request($xml ='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
@@ -1773,7 +1749,7 @@ function COCCAepp_RequestDelete($params) {
 	$tld = $params['tld'];
 $domain = "$sld.$tld";	
 	try {
-		$client = _COCCAepp_Client($domain);
+		$client = _COCCAepp_Client();
 
 		# Request Delete
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -1820,7 +1796,7 @@ function COCCAepp_ApproveTransfer($params) {
 $domain = "$sld.$tld";	
 	# 
 	try {
-		$client = _COCCAepp_Client($domain);
+		$client = _COCCAepp_Client();
 
 		# Approve Transfer Request
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -1866,7 +1842,7 @@ function COCCAepp_CancelTransferRequest($params) {
 	$tld = $params['tld'];
 $domain = "$sld.$tld";	
 	try {
-		$client = _COCCAepp_Client($domain);
+		$client = _COCCAepp_Client();
 
 		# Cancel Transfer Request
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -1912,7 +1888,7 @@ function COCCAepp_RejectTransfer($params) {
 	$tld = $params['tld'];
 $domain = "$sld.$tld";	
 	try {
-		$client = _COCCAepp_Client($domain);
+		$client = _COCCAepp_Client();
 
 		# Reject Transfer
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>

@@ -6,7 +6,6 @@ function COCCAepp_getConfigArray() {
 		"Password" => array( "Type" => "password", "Size" => "20", "Description" => "Enter your password here" ),
 		"Server" => array( "Type" => "text", "Size" => "20", "Description" => "Enter EPP Server Address" ),
 		"Port" => array( "Type" => "text", "Size" => "20", "Description" => "Enter EPP Server Port" ),
-		"IDN" => array( "Type" => "yesno" , "Description" => "Select to enable IDN Support" ),
 		"SSL" => array( "Type" => "yesno" ),
 		"Certificate" => array( "Type" => "text", "Description" => "Path of certificate .pem" )
 	);
@@ -39,7 +38,7 @@ function COCCAepp_GetNameservers($params) {
 
 	# Get client instance
 	try {
-		$client = _COCCAepp_Client();
+		$client = _COCCAepp_Client($domain);
 
 		# Get list of nameservers for domain
 		$result = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -115,7 +114,7 @@ function COCCAepp_SaveNameservers($params) {
 
 	# Get client instance
 	try {
-		$client = _COCCAepp_Client();
+		$client = _COCCAepp_Client($domain);
 
 		for($i=0; $i < count($nameservers); $i++) {
             # Get list of nameservers for domain
@@ -286,44 +285,100 @@ function COCCAepp_GetRegistrarLock($params) {
 	# Grab variables
 	$sld = $params["sld"];
 	$tld = $params["tld"];
-// Not Implemented
+// what is the current domain status?
+# Grab list of current nameservers
+ try {
+ $client = _COCCAepp_Client($domain);
+        $request = $client->request($xml='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+   <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
+     <command>
+       <info>
+         <domain:info
+          xmlns:domain="urn:ietf:params:xml:ns:domain-1.0">
+           <domain:name hosts="all">'.$domain.'</domain:name>
+         </domain:info>
+       </info>
+       <clTRID>'.mt_rand().mt_rand().'</clTRID>
+     </command>
+   </epp>
+');
+
+        # Parse XML result
+        $doc= new DOMDocument();
+        $doc->loadXML($request);
+        $statusarray = $doc->getElementsByTagName("status");
+				$currentstatus = array();
+				foreach ($statusarray as $nn) {
+					$currentstatus[] = $nn->getAttribute("s");
+				}
+			}
+			catch (Exception $e) {
+				$values["error"] = $e->getMessage();
+				return $values;
+			}
+			
 
 	# Get lock status
-	$lock = 0;
-	$lock=$params["lockenabled"];
-	if ($lock=="1") {
-		$lockstatus="locked";
-	} else {
-		$lockstatus="unlocked";
-	}
-	return $lockstatus;
-}
+	if (array_key_exists(array_search("clientDeleteProhibited", $currentstatus), $currentstatus) == 1 || array_key_exists(array_search("clientTransferProhibited", $currentstatus), $currentstatus) == 1 || array_key_exists(array_search("clientUpdateProhibited", $currentstatus), $currentstatus) == 1) {
+				$lockstatus = "locked";
+			}
+			else {
+				$lockstatus = "unlocked";
+			}
+			return $lockstatus;
+		}
 
 # NOT IMPLEMENTED
 function COCCAepp_SaveRegistrarLock($params) {
 	# Grab variables
 	$sld = $params["sld"];
 	$tld = $params["tld"];
-if (strcmp($params["lockenabled"], "locked") == 0) {
-	LockDomain($params);
-        $lockstatus = "1";
-    } else {
-		UnlockDomain($params);
-        $lockstatus = "0";
-    }
-	return $values;
+	$domain = "$sld.$tld";
+	//try {
+ 	//$client = _COCCAepp_Client($domain);
+ 	if ($params["lockenabled"] == "locked") {
+ 	COCCAepp_LockDomain($domain);
+ 	}else{
+ 	COCCAepp_UnlockDomain($domain);
+ 	}
+ 
+
 }
 
 function COCCAepp_LockDomain($params) {
-	# Grab variables
-	$sld = $params["sld"];
+$sld = $params["sld"];
 	$tld = $params["tld"];
+	$domain = "$sld.$tld";	
+	//$domain = "$sld.$tld";
 try {
 		if (!isset($client)) {
-			$client = _COCCAepp_Client();
+			$client = _COCCAepp_Client($domain);
 		}
 
 		# Lock Domain
+		//First lock the less restrictive locks
+		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<epp xmlns="urn:ietf:params:xml:ns:epp-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <command>
+    <update>
+      <domain:update xmlns:domain="urn:ietf:params:xml:ns:domain-1.0" xsi:schemaLocation="urn:ietf:params:xml:ns:domain-1.0 domain-1.0.xsd">
+        <domain:name>'.$domain.'</domain:name>
+        <domain:add>
+          <domain:status s="clientDeleteProhibited"/>
+          <domain:status s="clientTransferProhibited"/>         
+        </domain:add>
+      </domain:update>
+    </update>
+    <clTRID>'.mt_rand().mt_rand().'</clTRID>
+  </command>
+</epp>
+');
+# Parse XML result		
+	$doc= new DOMDocument();
+	$doc->loadXML($request);
+    logModuleCall('COCCAepp', 'Lock-Delete-Transfer', $xml, $request);
+
+	//Prohibit any further updation
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <epp xmlns="urn:ietf:params:xml:ns:epp-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <command>
@@ -331,9 +386,7 @@ try {
       <domain:update xmlns:domain="urn:ietf:params:xml:ns:domain-1.0" xsi:schemaLocation="urn:ietf:params:xml:ns:domain-1.0 domain-1.0.xsd">
         <domain:name>'.$sld.'.'.$tld.'</domain:name>
         <domain:add>
-          <domain:status s="clientUpdateProhibited"/>
-          <domain:status s="clientDeleteProhibited"/>
-          <domain:status s="clientTransferProhibited"/>
+          <domain:status s="clientUpdateProhibited"/>          
         </domain:add>
       </domain:update>
     </update>
@@ -366,12 +419,13 @@ function COCCAepp_UnlockDomain($params) {
 # Grab variables
 	$sld = $params["sld"];
 	$tld = $params["tld"];
+	$domain = "$sld.$tld";
 try {
 		if (!isset($client)) {
-			$client = _COCCAepp_Client();
+			$client = _COCCAepp_Client($domain);
 		}
 
-		# UnLock Domain
+		# Lift Update Prohibited Lock
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <epp xmlns="urn:ietf:params:xml:ns:epp-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <command>
@@ -379,7 +433,26 @@ try {
       <domain:update xmlns:domain="urn:ietf:params:xml:ns:domain-1.0" xsi:schemaLocation="urn:ietf:params:xml:ns:domain-1.0 domain-1.0.xsd">
         <domain:name>'.$sld.'.'.$tld.'</domain:name>
         <domain:rem>
-          <domain:status s="clientUpdateProhibited"/>
+          <domain:status s="clientUpdateProhibited"/>          
+        </domain:rem>
+      </domain:update>
+    </update>
+    <clTRID>'.mt_rand().mt_rand().'</clTRID>
+  </command>
+</epp>
+');
+# Parse XML result		
+	$doc= new DOMDocument();
+	$doc->loadXML($request);
+    logModuleCall('COCCAepp', 'Remove UpdateProhibited', $xml, $request);
+    
+$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<epp xmlns="urn:ietf:params:xml:ns:epp-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <command>
+    <update>
+      <domain:update xmlns:domain="urn:ietf:params:xml:ns:domain-1.0" xsi:schemaLocation="urn:ietf:params:xml:ns:domain-1.0 domain-1.0.xsd">
+        <domain:name>'.$sld.'.'.$tld.'</domain:name>
+        <domain:rem>          
           <domain:status s="clientDeleteProhibited"/>
           <domain:status s="clientTransferProhibited"/>
         </domain:rem>
@@ -389,7 +462,6 @@ try {
   </command>
 </epp>
 ');
-
 	# Parse XML result		
 	$doc= new DOMDocument();
 	$doc->loadXML($request);
@@ -416,11 +488,10 @@ function COCCAepp_RegisterDomain($params) {
 	$sld = $params["sld"];
 	$tld = $params["tld"];
 	$regperiod = $params["regperiod"];
-
+$domain = "$sld.$tld";
 	# Get registrant details
 	$RegistrantFirstName = $params["firstname"];
 	$RegistrantLastName = $params["lastname"];
-	$RegistrantOrganization = $params["Organisation"];
 	$RegistrantAddress1 = $params["address1"];
 	$RegistrantAddress2 = $params["address2"];
 	$RegistrantCity = $params["city"];
@@ -436,7 +507,6 @@ function COCCAepp_RegisterDomain($params) {
 	$AdminLastName = $params["adminlastname"];
 	$AdminAddress1 = $params["adminaddress1"];
 	$AdminAddress2 = $params["adminaddress2"];
-	$Adminorganisation = $params["adminorganisation"];
 	$AdminCity = $params["admincity"];
 	$AdminStateProvince = $params["adminstate"];
 	$AdminPostalCode = $params["adminpostcode"];
@@ -445,50 +515,9 @@ function COCCAepp_RegisterDomain($params) {
 	$AdminPhone = $params["adminphonenumber"];
 	#Generate Handle
 	$admHandle = generateHandle();
-        $domain = $sld.'.'.$tld;
-        //Create instance
-        if (!isset($client)) {
-			$client = _COCCAepp_Client();
-		}
-//Is IDN enabled?	
-   if (!empty($params['IDN']) && $params['IDN'] == 'on') {
-      require dirname(__FILE__) . '/Punycode.php';
-      // Import Punycode
-     
-
-// Use UTF-8 as the encoding
-     mb_internal_encoding('utf-8');
-      $Punycode = new True\Punycode();
-      $domain = $Punycode->encode($domain);
-
-	} 
-    
-//Does this domain exist in the registry?
- $request = $client->request($xml='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-   <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
-     <command>
-       <info>
-         <domain:info
-          xmlns:domain="urn:ietf:params:xml:ns:domain-1.0">
-           <domain:name hosts="all">'.$domain.'</domain:name>
-         </domain:info>
-       </info>
-       <clTRID>'.mt_rand().mt_rand().'</clTRID>
-     </command>
-   </epp>
-');
-
-        # Parse XML result
-        $doc= new DOMDocument();
-        $doc->loadXML($request);
-        # Pull off status
-        $coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
-        $msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-  $values["status"] = $msg;
-  //If the domain is not yet registered, create it 
-   if($coderes == '2303') {     
-        
-
+	
+	
+	
     # Generate array of new nameservers
     $nameservers=array();
     if(!empty($params["ns1"]))
@@ -504,7 +533,7 @@ function COCCAepp_RegisterDomain($params) {
 
 # Get client instance
 	try {
-		
+		$client = _COCCAepp_Client($domain);
         for($i=0; $i < count($nameservers); $i++) {
             # Get list of nameservers for domain
         	$result = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -600,7 +629,7 @@ function COCCAepp_RegisterDomain($params) {
 				<contact:id>'.$regHandle.'</contact:id>
 				<contact:postalInfo type="int">
 					<contact:name>'.$RegistrantFirstName.' '.$RegistrantLastName.'</contact:name>
-					<contact:org>'.$RegistrantOrganization.'</contact:org>
+					<contact:org>Example Inc.</contact:org>
 					<contact:addr>
 						<contact:street>'.$RegistrantAddress1.'</contact:street>
 						<contact:street>'.$RegistrantAddress2.'</contact:street>
@@ -650,7 +679,6 @@ function COCCAepp_RegisterDomain($params) {
 				<contact:id>'.$admHandle.'</contact:id>
 				<contact:postalInfo type="int">
 					<contact:name>'.$AdminFirstName.' '.$AdminLastName.'</contact:name>
-					<contact:org>'.$Adminorganisation.'</contact:org>
 					<contact:addr>
 						<contact:street>'.$AdminAddress1.'</contact:street>
 						<contact:street>'.$AdminAddress2.'</contact:street>
@@ -696,7 +724,7 @@ function COCCAepp_RegisterDomain($params) {
        <create>
          <domain:create
           xmlns:domain="urn:ietf:params:xml:ns:domain-1.0">
-				<domain:name>'.$domain.'</domain:name>
+				<domain:name>'.$sld.'.'.$tld.'</domain:name>
 <domain:period unit="y">'.$regperiod.'</domain:period>
 				<domain:ns>'.$add_hosts.'</domain:ns>
 				<domain:registrant>'.$regHandle.'</domain:registrant>
@@ -732,7 +760,7 @@ function COCCAepp_RegisterDomain($params) {
 		$values["error"] = 'RegisterDomain/EPP: '.$e->getMessage();
 		return $values;
 	}
-}
+
 	return $values;
 }
 
@@ -744,7 +772,7 @@ function COCCAepp_TransferDomain($params) {
 	$testmode = $params["TestMode"];
 	$sld = $params["sld"];
 	$tld = $params["tld"];
-
+$domain = "$sld.$tld";
 	# Domain info
 	$regperiod = $params["regperiod"];
 	$transfersecret = $params["transfersecret"];
@@ -765,7 +793,7 @@ function COCCAepp_TransferDomain($params) {
 	
 	# Get client instance
 	try {
-		$client = _COCCAepp_Client();
+		$client = _COCCAepp_Client($domain);
 
 		# Initiate transfer
 		$request = $client->request($xml ='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -814,10 +842,10 @@ function COCCAepp_RenewDomain($params) {
 	$sld = $params["sld"];
 	$tld = $params["tld"];
 	$regperiod = $params["regperiod"];
-
+$domain = "$sld.$tld";
 	# Get client instance
 	try {
-		$client = _COCCAepp_Client();
+		$client = _COCCAepp_Client($domain);
 
 		# Send renewal request
 		$request = $client->request($xml='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -902,11 +930,11 @@ function COCCAepp_GetContactDetails($params) {
 	# Grab variables
 	$sld = $params["sld"];
 	$tld = $params["tld"];
-
+$domain = "$sld.$tld";
 	# Get client instance
 	try {
 		if (!isset($client)) {
-			$client = _COCCAepp_Client();
+			$client = _COCCAepp_Client($domain);
 		}
 
 		# Grab domain info
@@ -1043,10 +1071,10 @@ function COCCAepp_SaveContactDetails($params) {
 	$tld = $params["tld"];
 	$sld = $params["sld"];
     $details = $params["contactdetails"];
-
+$domain = "$sld.$tld";
 	# Get client instance
 	try {
-        $client = _COCCAepp_Client();
+        $client = _COCCAepp_Client($domain);
 
         # Grab domain info
         $request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -1296,11 +1324,11 @@ function COCCAepp_RegisterNameserver($params) {
 	$tld = $params["tld"];
 	$nameserver = $params["nameserver"];
 	$ipaddress = $params["ipaddress"];
-	
+$domain = "$sld.$tld";	
 
 	# Grab client instance
 	try {
-		$client = _COCCAepp_Client();
+		$client = _COCCAepp_Client($domain);
 
 		# Register nameserver
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -1357,10 +1385,10 @@ function COCCAepp_ModifyNameserver($params) {
 	$currentipaddress = $params["currentipaddress"];
 	$newipaddress = $params["newipaddress"];
 
-	
+$domain = "$sld.$tld";	
 	# Grab client instance
 	try {
-		$client = _COCCAepp_Client();
+		$client = _COCCAepp_Client($domain);
 
 		# Modify nameserver
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -1417,10 +1445,10 @@ function COCCAepp_DeleteNameserver($params) {
 	$sld = $params["sld"];
 	$nameserver = $params["nameserver"];
 	
-
+$domain = "$sld.$tld";
 	# Grab client instance
 	try {
-		$client = _COCCAepp_Client();
+		$client = _COCCAepp_Client($domain);
 
 		
 
@@ -1469,7 +1497,7 @@ function _COCCAepp_message($code) {
 }
 
 # Function to create internal EPP request
-function _COCCAepp_Client() {
+function _COCCAepp_Client($domain) {
 	# Setup include dir
 	$include_path = ROOTDIR . '/modules/registrars/COCCAepp';
 	set_include_path($include_path . PATH_SEPARATOR . get_include_path());
@@ -1480,14 +1508,42 @@ function _COCCAepp_Client() {
 	# Grab module parameters
 	$params = getregistrarconfigoptions('COCCAepp');
 	# Check if module parameters are sane
-	if (empty($params['Username']) || empty($params['Password'])) {
-		throw new Exception('System configuration error(1), please contact your provider');
-	}
-	
+	//if (empty($params['Username']) || empty($params['Password'])) {
+	//	throw new Exception('System configuration error(1), please contact your provider');
+	//}
+	//Get the domain extension...for the credentials
+	$domain=split("\.",$domain);
+        if(count($domain)>2){
+            $domainname=$domain[0];
+            for($i=1;$i<count($domain);$i++){
+                if($i==1){
+                    $tldname=$domain[$i];
+                }else{
+                   // $tldname.=".".$domain[$i];
+                   $tldname=$domain[$i];
+                }
+            }
+        }else{
+            $domainname=$domain[0];
+            $tldname=$domain[1];
+        }
+        $tldname=".".$tldname;
+       // echo $tldname;
+       file_put_contents('/home/afrireg2/public_html/modules/registrars/COCCAepp/tld.txt', $tldname, FILE_APPEND);
+        //Get the EPP Configurations for the extension:
+        
+        $results = select_query("mod_COCCARegtlds", "", array("tld" => $tldname));
+        $result = mysql_fetch_array($results);
+        file_put_contents('/home/afrireg2/public_html/modules/registrars/COCCAepp/query.txt', $result['hostname'], FILE_APPEND);
+        $host= $result['hostname'];
+        $user= $result['username'];
+        $pass=$result['password'];
+        $port=$result['port'];
+
 	# Create SSL context
 	$context = stream_context_create();
 	# Are we using ssl?
-	$use_ssl = false;
+	$use_ssl = true;
 	if (!empty($params['SSL']) && $params['SSL'] == 'on') {
 		$use_ssl = true;
 	}
@@ -1504,15 +1560,15 @@ function _COCCAepp_Client() {
 	$client = new Net_EPP_Client();
 
 	# Connect
-	$res = $client->connect($params['Server'], $params['Port'], 10, $use_ssl, $context);
+	$res = $client->connect($host, $port, 60, $use_ssl, $context);
 
 	# Perform login
 	$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
      <command>
        <login>
-         <clID>'.$params['Username'].'</clID>
-         <pw>'.$params['Password'].'</pw>
+         <clID>'.$user.'</clID>
+         <pw>'.$pass.'</pw>
          <options>
            <version>1.0</version>
            <lang>en</lang>
@@ -1546,11 +1602,11 @@ function COCCAepp_TransferSync($params) {
 	$dnsmanagement = $params['dnsmanagement'];
 	$emailforwarding = $params['emailforwarding'];
 	$idprotection = $params['idprotection'];
-
+$domain = "$sld.$tld";
 	# Other parameters used in your _getConfigArray() function would also be available for use in this function
 
 	try {
-		$client = _COCCAepp_Client();
+		$client = _COCCAepp_Client($domain);
 		# Grab domain info
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
@@ -1622,11 +1678,11 @@ function COCCAepp_Sync($params) {
 	$dnsmanagement = $params['dnsmanagement'];
 	$emailforwarding = $params['emailforwarding'];
 	$idprotection = $params['idprotection'];
-
+$domain = "$sld.$tld";
 	# Other parameters used in your _getConfigArray() function would also be available for use in this function
 
 	try {
-		$client = _COCCAepp_Client();
+		$client = _COCCAepp_Client($domain);
 		# Grab domain info
 		$request = $client->request($xml ='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
@@ -1715,9 +1771,9 @@ function COCCAepp_Sync($params) {
 function COCCAepp_RequestDelete($params) {
 	$sld = $params['sld'];
 	$tld = $params['tld'];
-	
+$domain = "$sld.$tld";	
 	try {
-		$client = _COCCAepp_Client();
+		$client = _COCCAepp_Client($domain);
 
 		# Request Delete
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -1761,10 +1817,10 @@ function COCCAepp_RequestDelete($params) {
 function COCCAepp_ApproveTransfer($params) {
 	$sld = $params['sld'];
 	$tld = $params['tld'];
-	
+$domain = "$sld.$tld";	
 	# 
 	try {
-		$client = _COCCAepp_Client();
+		$client = _COCCAepp_Client($domain);
 
 		# Approve Transfer Request
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -1808,9 +1864,9 @@ function COCCAepp_ApproveTransfer($params) {
 function COCCAepp_CancelTransferRequest($params) {
 	$sld = $params['sld'];
 	$tld = $params['tld'];
-	
+$domain = "$sld.$tld";	
 	try {
-		$client = _COCCAepp_Client();
+		$client = _COCCAepp_Client($domain);
 
 		# Cancel Transfer Request
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -1854,9 +1910,9 @@ function COCCAepp_CancelTransferRequest($params) {
 function COCCAepp_RejectTransfer($params) {
 	$sld = $params['sld'];
 	$tld = $params['tld'];
-	
+$domain = "$sld.$tld";	
 	try {
-		$client = _COCCAepp_Client();
+		$client = _COCCAepp_Client($domain);
 
 		# Reject Transfer
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -1894,6 +1950,11 @@ function COCCAepp_RejectTransfer($params) {
 	}
 
 	return $values;
+}
+
+function remove_locks($domain, $status) {
+
+		
 }
 
 function generateHandle() {

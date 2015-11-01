@@ -724,8 +724,7 @@ $domain = "$sld.$tld";
        <create>
          <domain:create
           xmlns:domain="urn:ietf:params:xml:ns:domain-1.0">
-             // old '.$domain.'
-				<domain:name>'.$sld.'.'.$tld.'</domain:name>
+                  		<domain:name>'.$sld.'.'.$tld.'</domain:name>
 <domain:period unit="y">'.$regperiod.'</domain:period>
 				<domain:ns>'.$add_hosts.'</domain:ns>
 				<domain:registrant>'.$regHandle.'</domain:registrant>

@@ -1512,7 +1512,9 @@ function _COCCAepp_Client() {
 		throw new Exception('System configuration error(1), please contact your provider');
 	}
 
-       // echo $tldname;
+       // Define some parameters
+       $host= $params['Server'];
+       $port= $params['Port'];
        
         //Get the EPP Configurations for the extension:
         

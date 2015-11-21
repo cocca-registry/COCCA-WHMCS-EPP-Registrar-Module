@@ -6,14 +6,14 @@
 6. It's suggested, although not required, to keep the module log enabled in Utilities -> Log -> Log Module, even for production use, to facilitate the diagnosis of problems reported by customers. By doing so, it won't be necessary to ask the customer to redo a transaction for an issue to be diagnosed.
 7. Enable domain Sync and add this to cron.... php -q /path/to/home/public_html/whmcspath/crons/domainsync.php
 
-################ Configuring the EPP Whois - Checking Domain availability #################
+################ Configuring the EPP domain check availability #################
 
 1. Go to the file 'YOUR_PATH_TO_WHMCS/includes/whoisservers.php'
 2. Apend the following at the last line
 
 .gtld|http://example.com/whoisquery/query.php?domain=|HTTPREQUEST-Available
 
-Replace .gtld with the extensions that you will be using the script for and example.com with your domain.
+Replace .gtld with the extensions that you will be using the script for and example.com with your WHMCS URL.
 
 
 

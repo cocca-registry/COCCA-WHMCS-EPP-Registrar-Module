@@ -26,6 +26,7 @@ $domain=$_GET["domain"];
      mb_internal_encoding('utf-8');
       $Punycode = new True\Punycode();
       $domain = $Punycode->encode($domain);
+   }
 # Get client instance
 	try {
 		$client = _COCCAepp_Client();

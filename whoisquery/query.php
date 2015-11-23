@@ -1,6 +1,6 @@
 <?php
 # This file brings in a few constants we need
-require_once  '../dbconnect.php';
+require_once  '../init.php';
 # Setup include dir
 $include_path = ROOTDIR .'/modules/registrars/COCCAepp';
 set_include_path($include_path . PATH_SEPARATOR . get_include_path());

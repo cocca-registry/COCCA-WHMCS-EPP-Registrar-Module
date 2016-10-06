@@ -1765,6 +1765,7 @@ $domain = "$sld.$tld";
 		</epp:delete>
 		 <clTRID>'.mt_rand().mt_rand().'</clTRID>
 	</epp:command>
+    </command>
 </epp:epp>
 ');
 

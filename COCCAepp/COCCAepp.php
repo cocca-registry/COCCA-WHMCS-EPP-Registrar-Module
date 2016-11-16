@@ -1757,16 +1757,15 @@ $domain = "$sld.$tld";
 		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
      <command>
-	<epp:command>
-		<epp:delete>
-			<domain:delete xsi:schemaLocation="urn:ietf:params:xml:ns:domain-1.0 domain-1.0.xsd">
-				<domain:name>'.$sld.'.'.$tld.'</domain:name>
-			</domain:delete>
-		</epp:delete>
-		 <clTRID>'.mt_rand().mt_rand().'</clTRID>
-	</epp:command>
-    </command>
-</epp:epp>
+      <delete>
+       <domain:delete xmlns:domain="urn:ietf:params:xml:ns:domain-1.0">
+        <domain:name>'.$sld.'.'.$tld.'</domain:name>
+       </domain:delete>
+      </delete>
+        <clTRID>'.mt_rand().mt_rand().'</clTRID>
+     </command>
+    </epp>
+
 ');
 
 		# Parse XML result

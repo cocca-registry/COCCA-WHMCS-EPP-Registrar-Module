@@ -1564,9 +1564,32 @@ function _COCCAepp_Client() {
      </command>
    </epp>
 ');
-	logModuleCall('COCCAepp', 'Connect', $xml, $request);
+    $encryptedrequest = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+   <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
+     <command>
+       <login>
+         <clID>'.$params['Username'].'</clID>
+         <pw>********</pw>
+         <options>
+           <version>1.0</version>
+           <lang>en</lang>
+         </options>
+         <svcs>
+           <objURI>urn:ietf:params:xml:ns:obj1</objURI>
+           <objURI>urn:ietf:params:xml:ns:obj2</objURI>
+           <objURI>urn:ietf:params:xml:ns:obj3</objURI>
+           <svcExtension>
+             <extURI>http://custom/obj1ext-1.0</extURI>
+           </svcExtension>
+         </svcs>
+       </login>
+       <clTRID>'.mt_rand().mt_rand().'</clTRID>
+     </command>
+   </epp>
+                                      ');
 
-	return $client;
+       logModuleCall('COCCAepp', 'Connect', $xml, $encryptedrequest);
+       return $client;
 }
 
 function COCCAepp_TransferSync($params) {

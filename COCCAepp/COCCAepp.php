@@ -285,6 +285,7 @@ function COCCAepp_GetRegistrarLock($params) {
 	# Grab variables
 	$sld = $params["sld"];
 	$tld = $params["tld"];
+	$domain = "$sld.$tld";
 // what is the current domain status?
 # Grab list of current nameservers
  try {
@@ -823,7 +824,16 @@ $domain = "$sld.$tld";
 		}
 
 		$values["status"] = $msg;
-
+		//Update tbldomains - transfer pends approval
+        if ($coderes == "1001"){      
+				$query = "UPDATE tbldomains SET status='Pending Transfer' WHERE domain='" . $domain . "'";
+				mysql_query($query);
+	    }
+	  //Update tbldomains - The transfer went through...the client had the authcode
+	  if ($coderes == "1000"){      
+				$query = "UPDATE tbldomains SET status='Active' WHERE domain='" . $domain . "'";
+				mysql_query($query);
+	    }
 		
 	} catch (Exception $e) {
 		$values["error"] = 'TransferDomain/EPP: '.$e->getMessage();
@@ -834,8 +844,6 @@ $domain = "$sld.$tld";
 
 	return $values;
 }
-
-
 # Function to renew domain
 function COCCAepp_RenewDomain($params) {
 	# Grab variables
@@ -1296,7 +1304,6 @@ function changeContact($client, $newdata, $handle, $type = "") {
     return $handle;
 }
 
-# NOT IMPLEMENTED
 function COCCAepp_GetEPPCode($params) {
 	# Grab variables
 	$username = $params["Username"];
@@ -1304,14 +1311,45 @@ function COCCAepp_GetEPPCode($params) {
 	$testmode = $params["TestMode"];
 	$sld = $params["sld"];
 	$tld = $params["tld"];
+    $newEppKey = authKey();
+	# Grab client instance
+	try {
+		$client = _COCCAepp_Client();
 
-	$values["eppcode"] = '';
+		# Register nameserver
+		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<epp xmlns="urn:ietf:params:xml:ns:epp-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:ietf:params:xml:ns:epp-1.0 epp-1.0.xsd">
+<command>
+<update>
+<domain:update xmlns:domain="urn:ietf:params:xml:ns:domain-1.0" xsi:schemaLocation="urn:ietf:params:xml:ns:domain-1.0 domain-1.0.xsd">
+<domain:name>" . $domain . "</domain:name>
+<domain:chg>
+<domain:authInfo>
+<domain:pw>' . $newEppKey . '</domain:pw>
+</domain:authInfo>
+</domain:chg>
+</domain:update>
+</update>
+<clTRID>'  .mt_rand().mt_rand() . '</clTRID>
+</command>
+</epp>
+');
+		# Parse XML result
+		$doc= new DOMDocument();
+		$doc->loadXML($request);
+		logModuleCall('COCCAepp', 'EPPCODE', $xml, $request);
 
+	
+	
+	$values["eppcode"] = $newEppKey;
 	# If error, return the error message in the value below
-	//$values["error"] = 'error';
+} catch (Exception $e) {
+		$values["error"] = 'Authcode/EPP: '.$e->getMessage();
+		return $values;
+	}
+	
 	return $values;
 }
-
 
 
 # Function to register nameserver
@@ -1606,67 +1644,77 @@ function COCCAepp_TransferSync($params) {
 $domain = "$sld.$tld";
 	# Other parameters used in your _getConfigArray() function would also be available for use in this function
 
-	try {
-		$client = _COCCAepp_Client();
-		# Grab domain info
-		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+try {
+$client = _COCCAepp_Client();
+		
+$request = $client->request($xml ='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
      <command>
        <info>
          <domain:info
           xmlns:domain="urn:ietf:params:xml:ns:domain-1.0">
-				<domain:name hosts="all">'.$sld.'.'.$tld.'</domain:name>
+				<domain:name>'.$sld.'.'.$tld.'</domain:name>
 			</domain:info>
 		</info>
 		<clTRID>'.mt_rand().mt_rand().'</clTRID>
 	</command>
 </epp>
-');
-
-		$doc= new DOMDocument();
+');		
+		
+		$doc = new DOMDocument();
 		$doc->loadXML($request);
-		logModuleCall('COCCAepp', 'TransferSync', $xml, $request);
-
-		$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
-		$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-		# Check result
-		if ($coderes == '2303') {
-			$values['error'] = "TransferSync/domain-info($domain): Domain not found";
-			return $values;
-		} else if (!eppSuccess($coderes)) {
-			$values['error'] = "TransferSync/domain-info($domain): Code("._COCCAepp_message($coderes).") $msg";
+		
+		$messagecode = $doc->getElementsByTagName("result")->item(0)->getAttribute("code");
+		$message = $doc->getElementsByTagName("msg")->item(0)->nodeValue;
+		if ($messagecode != "1000") {
+			
+			$values["error"] = $messagecode . " - " . $message;
 			return $values;
 		}
-
-		# Check if we can get a status back
-		if ($doc->getElementsByTagName('status')->item(0)) {
-			$statusres = $doc->getElementsByTagName('status')->item(0)->getAttribute('s');
-			$createdate = substr($doc->getElementsByTagName('crDate')->item(0)->nodeValue,0,10);
-			$nextduedate = substr($doc->getElementsByTagName('exDate')->item(0)->nodeValue,0,10);
-		} else {
-			$values['error'] = "TransferSync/domain-info($domain): Domain not found";
-			return $values;
+		$transferStatus = $doc->getElementsByTagName("trStatus")->item(0)->nodeValue;
+		if ($transferStatus == "clientApproved") {
+			$values["completed"] = true;
+			$values["expirydate"] = gmdate("Y-m-d", strtotime($response["expires_date"]));
 		}
-
-		$values['status'] = $msg;
-
-		# Check status and update
-		if ($statusres == "ok") {
-			$values['completed'] = true;
-
-		} else {
-			$values['error'] = "TransferSync/domain-info($domain): Unknown status code '$statusres'";
+		else {
+			if ($transferStatus == "clientRejected") {
+				$values["failed"] = true;
+			}
+			else {
+				if ($transferStatus == "clientCancelled") {
+					$values["failed"] = true;
+				}
+				else {
+					if ($transferStatus == "serverApproved") {
+						$values["completed"] = true;
+						$values["expirydate"] = gmdate("Y-m-d", strtotime($response["expires_date"]));
+					}
+					else {
+						if ($transferStatus == "serverRejected") {
+							$values["failed"] = true;
+						}
+						else {
+							if ($transferStatus == "serverCancelled") {
+								$values["failed"] = true;
+							}
+							else {
+								$values["completed"] = false;
+							}
+						}
+					}
+				}
+			}
 		}
-
-		$values['expirydate'] = $nextduedate;
-
-	} catch (Exception $e) {
-		$values["error"] = 'TransferSync/EPP: '.$e->getMessage();
+	}
+	catch (Exception $e) {
+		$values["error"] = $e->getMessage();
 		return $values;
 	}
-
+	
 	return $values;
 }
+
+
 
 function COCCAepp_Sync($params) {
 	$domainid = $params['domainid'];
@@ -1684,8 +1732,8 @@ $domain = "$sld.$tld";
 
 	try {
 		$client = _COCCAepp_Client();
-		# Grab domain info
-		$request = $client->request($xml ='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+		
+$request = $client->request($xml ='<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
      <command>
        <info>
@@ -1697,77 +1745,36 @@ $domain = "$sld.$tld";
 		<clTRID>'.mt_rand().mt_rand().'</clTRID>
 	</command>
 </epp>
-');
-
-		$doc= new DOMDocument();
+');		
+		
+		$doc = new DOMDocument();
 		$doc->loadXML($request);
 		logModuleCall('COCCAepp', 'Sync', $xml, $request);
-
-		# Initialize the owningRegistrar which will contain the owning registrar
-		# The <domain:clID> element contains the unique identifier of the registrar that owns the domain.
-		$owningRegistrar = NULL;
-
-		$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
-		$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
-		# Check result
-		if ($coderes == '2303') {
-			# Code 2303, domain not found
-			$values['error'] = "TransferSync/domain-info($domain): Domain not found";
-			return $values;
-		} else if (eppSuccess($coderes)) {
-			if (
-				$doc->getElementsByTagName('infData') &&
-				$doc->getElementsByTagName('infData')->item(0)->getElementsByTagName('ns')->item(0) &&
-				$doc->getElementsByTagName('infData')->item(0)->getElementsByTagName('clID')
-			) {
-				$owningRegistrar = $doc->getElementsByTagName('infData')->item(0)->getElementsByTagName('clID')->item(0)->nodeValue;
-			}
-		} else {
-			$values['error'] = "Sync/domain-info($domain): Code("._COCCAepp_message($coderes).") $msg";
+		$messagecode = $doc->getElementsByTagName("result")->item(0)->getAttribute("code");
+		$message = $doc->getElementsByTagName("msg")->item(0)->nodeValue;
+		if ($messagecode != "1000") {
+			
+			$values["error"] = $messagecode . " - " . $message;
 			return $values;
 		}
-
-		# Check if we can get a status back
-		if ($doc->getElementsByTagName('status')->item(0)) {
-			$statusres = $doc->getElementsByTagName('status')->item(0)->getAttribute('s');
-			$createdate = substr($doc->getElementsByTagName('crDate')->item(0)->nodeValue,0,10);
-			$nextduedate = substr($doc->getElementsByTagName('exDate')->item(0)->nodeValue,0,10);
-		} else if (!empty($owningRegistrar) && $owningRegistrar != $username) {
-			# If we got an owningRegistrar back and we're not the owning registrar, return error
-			$values['error'] = "Sync/domain-info($domain): Domain belongs to a different registrar, (owning registrar: $owningRegistrar, your registrar: $username)";
-			return $values;
-		} else {
-			$values['error'] = "Sync/domain-info($domain): Domain not found";
-			return $values;
+		$todayDate = gmdate("Y-m-d");
+		$expiryDate = $doc->getElementsByTagName("exDate")->item(0)->nodeValue;
+		$expiryDate = gmdate("Y-m-d", strtotime($expiryDate));
+		if (strtotime($expiryDate) < strtotime($todayDate)) {
+			$values["expired"] = true;
 		}
-
-		$values['status'] = $msg;
-
-		# Check status and update
-		if ($statusres == "ok") {
-			$values['active'] = true;
-
-		} elseif ($statusres == "pendingUpdate") {
-
-		} elseif ($statusres == "serverHold") {
-
-		} elseif ($statusres == "expired" || $statusres == "pendingDelete" || $statusres == "inactive") {
-			$values['expired'] = true;
-
-		} else {
-			$values['error'] = "Sync/domain-info($domain): Unknown status code '$statusres' ";
+		else {
+			$values["active"] = true;
 		}
-
-		$values['expirydate'] = $nextduedate;
-
-	} catch (Exception $e) {
-		$values["error"] = 'Sync/EPP: '.$e->getMessage();
+		$values["expirydate"] = $expiryDate;
+	}
+	catch (Exception $e) {
+		$values["error"] = $e->getMessage();
 		return $values;
 	}
-
+	
 	return $values;
 }
-
 
 function COCCAepp_RequestDelete($params) {
 	$sld = $params['sld'];
@@ -1985,3 +1992,16 @@ function array_empty($a) {
 
     return true;
 }
+
+	
+public function authKey() {
+		$chars = "a0Zb1Yc2Xd3We4Vf5Ug6Th7Si8Rj9Qk8Pl7Om6Nn5Mo4Lp3Kq2Jr1Is0Ht1Gu2Fv3Ew4Dx5Cy6Bz7A";
+		$max = strlen($chars) - 1;
+		$eppKey = null;
+		$i = 0;
+		while ($i < 10) {
+			$eppKey .= $chars[mt_rand(0, $max)];
+			++$i;
+		}
+		return $eppKey;
+	}

@@ -2005,7 +2005,7 @@ function array_empty($a) {
 
 	
 function authKey() {
-		$chars = "a0Zb1Yc2Xd3We4Vf5Ug6Th7Si8Rj9Qk8Pl7Om6Nn5Mo4Lp3Kq2Jr1Is0Ht1Gu2Fv3Ew4Dx5Cy6Bz7A";
+		$chars = "a0Zb1Yc2Xd3We4Vf5Ug6Th7Si8Rj9Qk8Pl7Om6Nn5Mo4Lp3Kq2Jr1Is0Ht1Gu2Fv3Ew4Dx5Cy6Bz7A!#$%&()*<=>?@^{}";
 		$max = strlen($chars) - 1;
 		$eppKey = null;
 		$i = 0;

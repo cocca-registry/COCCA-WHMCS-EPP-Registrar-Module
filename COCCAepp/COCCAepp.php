@@ -1343,14 +1343,24 @@ function COCCAepp_GetEPPCode($params) {
 	
 	$values["eppcode"] = $newEppKey;
 	# If error, return the error message in the value below
-} catch (Exception $e) {
-		$values["error"] = 'Authcode/EPP: '.$e->getMessage();
-		return $values;
-	}
-	
-	return $values;
-}
+		 $coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
+        $msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
+        if(!eppSuccess($coderes)) {
+            $values["error"] = "Authcode/EPP($sld.$tld): Code ($coderes) $msg";
+            return $values;
+        }
 
+        $values["status"] = $msg;
+
+        return $values;
+
+        } catch (Exception $e) {
+                $values["error"] = 'Authcode/EPP: '.$e->getMessage();
+                return $values;
+        }
+
+        return $values;
+}
 
 # Function to register nameserver
 function COCCAepp_RegisterNameserver($params) {

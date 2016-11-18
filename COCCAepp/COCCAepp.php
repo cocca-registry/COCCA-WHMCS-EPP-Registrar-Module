@@ -1322,7 +1322,7 @@ function COCCAepp_GetEPPCode($params) {
 <command>
 <update>
 <domain:update xmlns:domain="urn:ietf:params:xml:ns:domain-1.0" xsi:schemaLocation="urn:ietf:params:xml:ns:domain-1.0 domain-1.0.xsd">
-<domain:name>" . $domain . "</domain:name>
+<domain:name>'.$sld.'.'.$tld.'</domain:name>
 <domain:chg>
 <domain:authInfo>
 <domain:pw>' . $newEppKey . '</domain:pw>

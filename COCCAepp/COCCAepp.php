@@ -338,9 +338,9 @@ function COCCAepp_SaveRegistrarLock($params) {
 	//try {
  	//$client = _COCCAepp_Client($domain);
  	if ($params["lockenabled"] == "locked") {
- 	COCCAepp_LockDomain($domain);
+ 	COCCAepp_LockDomain($params);
  	}else{
- 	COCCAepp_UnlockDomain($domain);
+ 	COCCAepp_UnlockDomain($params);
  	}
  
 
@@ -363,10 +363,11 @@ try {
   <command>
     <update>
       <domain:update xmlns:domain="urn:ietf:params:xml:ns:domain-1.0" xsi:schemaLocation="urn:ietf:params:xml:ns:domain-1.0 domain-1.0.xsd">
-        <domain:name>'.$params.'</domain:name>
+        <domain:name>'.$sld.'.'.$tld.'</domain:name>
         <domain:add>
           <domain:status s="clientDeleteProhibited"/>
           <domain:status s="clientTransferProhibited"/>         
+	  <domain:status s="clientUpdateProhibited"/>          
         </domain:add>
       </domain:update>
     </update>
@@ -377,30 +378,7 @@ try {
 # Parse XML result		
 	$doc= new DOMDocument();
 	$doc->loadXML($request);
-    logModuleCall('COCCAepp', 'Lock-Delete-Transfer', $xml, $request);
-
-	//Prohibit any further updation
-		$request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<epp xmlns="urn:ietf:params:xml:ns:epp-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <command>
-    <update>
-      <domain:update xmlns:domain="urn:ietf:params:xml:ns:domain-1.0" xsi:schemaLocation="urn:ietf:params:xml:ns:domain-1.0 domain-1.0.xsd">
-        <domain:name>'.$sld.'.'.$tld.'</domain:name>
-        <domain:add>
-          <domain:status s="clientUpdateProhibited"/>          
-        </domain:add>
-      </domain:update>
-    </update>
-    <clTRID>'.mt_rand().mt_rand().'</clTRID>
-  </command>
-</epp>
-');
-
-	# Parse XML result		
-	$doc= new DOMDocument();
-	$doc->loadXML($request);
-    logModuleCall('COCCAepp', 'Domain Lock', $xml, $request);
-
+        logModuleCall('COCCAepp', 'Lock-Delete-Transfer', $xml, $request);
 	$coderes = $doc->getElementsByTagName('result')->item(0)->getAttribute('code');
 	$msg = $doc->getElementsByTagName('msg')->item(0)->nodeValue;
 	# Check result

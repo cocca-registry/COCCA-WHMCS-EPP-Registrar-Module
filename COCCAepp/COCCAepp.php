@@ -347,10 +347,10 @@ function COCCAepp_SaveRegistrarLock($params) {
 }
 
 function COCCAepp_LockDomain($params) {
-$sld = $params["sld"];
+        $sld = $params["sld"];
 	$tld = $params["tld"];
 	$domain = "$sld.$tld";	
-	//$domain = "$sld.$tld";
+
 try {
 		if (!isset($client)) {
 			$client = _COCCAepp_Client();
@@ -363,7 +363,7 @@ try {
   <command>
     <update>
       <domain:update xmlns:domain="urn:ietf:params:xml:ns:domain-1.0" xsi:schemaLocation="urn:ietf:params:xml:ns:domain-1.0 domain-1.0.xsd">
-        <domain:name>'.$domain.'</domain:name>
+        <domain:name>'.$params.'</domain:name>
         <domain:add>
           <domain:status s="clientDeleteProhibited"/>
           <domain:status s="clientTransferProhibited"/>         

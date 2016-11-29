@@ -367,7 +367,8 @@ try {
         <domain:add>
           <domain:status s="clientDeleteProhibited"/>
           <domain:status s="clientTransferProhibited"/>         
-	  <domain:status s="clientUpdateProhibited"/>          
+	  <domain:status s="clientUpdateProhibited"/>         
+          <domain:status s="clientRenewProhibited"/>
         </domain:add>
       </domain:update>
     </update>
@@ -412,7 +413,7 @@ try {
       <domain:update xmlns:domain="urn:ietf:params:xml:ns:domain-1.0" xsi:schemaLocation="urn:ietf:params:xml:ns:domain-1.0 domain-1.0.xsd">
         <domain:name>'.$sld.'.'.$tld.'</domain:name>
         <domain:rem>
-          <domain:status s="clientUpdateProhibited"/>          
+        <domain:status s="clientUpdateProhibited"/>          
         </domain:rem>
       </domain:update>
     </update>
@@ -434,6 +435,7 @@ $request = $client->request($xml = '<?xml version="1.0" encoding="UTF-8" standal
         <domain:rem>          
           <domain:status s="clientDeleteProhibited"/>
           <domain:status s="clientTransferProhibited"/>
+          <domain:status s="clientRenewProhibited"/>
         </domain:rem>
       </domain:update>
     </update>
